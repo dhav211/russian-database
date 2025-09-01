@@ -1,6 +1,6 @@
 package com.havlin.daniel.russian.entities.dictionary;
 
-enum WordType {
+public enum WordType {
     NOUN,
     VERB,
     ADJECTIVE,

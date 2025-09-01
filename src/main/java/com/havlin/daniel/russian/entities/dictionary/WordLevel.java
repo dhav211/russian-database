@@ -1,6 +1,6 @@
 package com.havlin.daniel.russian.entities.dictionary;
 
-enum WordLevel {
+public enum WordLevel {
     A1,
     A2,
     B1,
