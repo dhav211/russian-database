@@ -6,5 +6,6 @@ public enum WordLevel {
     B1,
     B2,
     C1,
-    C2
+    C2,
+    ERROR
 }

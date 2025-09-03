@@ -32,3 +32,9 @@ build/
 
 ### VS Code ###
 .vscode/
+/src/main/java/com/havlin/daniel/russian/bootstrap/openrussian_dump/adjectives.csv
+/src/main/java/com/havlin/daniel/russian/bootstrap/openrussian_dump/nouns.csv
+/src/main/java/com/havlin/daniel/russian/bootstrap/openrussian_dump/translations.csv
+/src/main/java/com/havlin/daniel/russian/bootstrap/openrussian_dump/verbs.csv
+/src/main/java/com/havlin/daniel/russian/bootstrap/openrussian_dump/words.csv
+/src/main/java/com/havlin/daniel/russian/bootstrap/openrussian_dump/words_forms.csv

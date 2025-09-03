@@ -39,12 +39,18 @@ public class BootstrapData implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        //createWords();
-        //createTranslations();
-        //createNouns();
-        //createVerbs();
-        createWordForms();
-        System.out.println("FINISHED");
+        // Uncomment to recreate database
+        // Uncomment to recreate database
+//        createWords();
+//        System.out.println("FINISHED words");
+//        createTranslations();
+//        System.out.println("FINISHED translations");
+//        createNouns();
+//        System.out.println("FINISHED nouns");
+//        createVerbs();
+//        System.out.println("FINISHED verbs");
+//        createWordForms();
+//        System.out.println("FINISHED word forms");
     }
 
     private void createWords() throws Exception {
@@ -274,11 +280,25 @@ public class BootstrapData implements CommandLineRunner {
                     word.ifPresent(wordForm::setWord);
                     word.ifPresent(value -> value.getWordForms().add(wordForm));
 
+                    // TODO debug this before building the database to ensure the ( ) are being removed
                     if (values.length > 2) {
+                        // Remove the parenthesis from the word.
+                        if (wordForm.getAccented().contains("(")) {
+                            StringBuilder stringBuilder = new StringBuilder(values[2]);
+                            stringBuilder.deleteCharAt(0);
+                            stringBuilder.deleteCharAt(stringBuilder.length() - 1);
+                            values[2] = stringBuilder.toString();
+                        }
                         wordForm.setFormType(values[2]);
                     }
 
                     if (values.length > 4) {
+                        if (wordForm.getAccented().contains("(")) {
+                            StringBuilder stringBuilder = new StringBuilder(values[4]);
+                            stringBuilder.deleteCharAt(0);
+                            stringBuilder.deleteCharAt(stringBuilder.length() - 1);
+                            values[4] = stringBuilder.toString();
+                        }
                         wordForm.setAccented(values[4]);
                     }
 

@@ -6,5 +6,6 @@ public enum WordType {
     ADJECTIVE,
     ADVERB,
     EXPRESSION,
-    OTHER
+    OTHER,
+    ERROR
 }
