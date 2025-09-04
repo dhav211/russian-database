@@ -12,7 +12,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
+import java.util.Optional;
 import java.util.Set;
+
+import static java.util.Arrays.stream;
 
 @SpringBootTest
 public class DictionaryTests {
@@ -75,11 +78,18 @@ public class DictionaryTests {
         AdjectiveDTO adjectiveDTO1 = wordRetrievalService.getAdjectiveDtoFromWord(word1);
         AdjectiveDTO adjectiveDTO2 = wordRetrievalService.getAdjectiveDtoFromWord(word2);
 
+        Set<Word> words3 = wordRetrievalService.getWordsFromAccentedText("чёртовые");
+        Optional<Word> wordFromSet = words3.stream().findFirst();
+        AdjectiveDTO adjectiveDTO3;
+        adjectiveDTO3 = wordFromSet.map(word -> wordRetrievalService.getAdjectiveDtoFromWord(word)).orElse(null);
+
+
         Assertions.assertAll(
                 () -> Assertions.assertNull(adjectiveDTO1.getComparative()),
                 () -> Assertions.assertEquals(adjectiveDTO1.getFeminineNominative(), "сове'тская"),
                 () -> Assertions.assertEquals(adjectiveDTO1.getMasculineInstrumental(), "сове'тским"),
-                () -> Assertions.assertEquals(adjectiveDTO2.getFeminineInstrumental(), "кра'сной, кра'сною")
+                () -> Assertions.assertEquals(adjectiveDTO2.getFeminineInstrumental(), "кра'сной, кра'сною"),
+                () -> Assertions.assertEquals(adjectiveDTO3.getMasculineAccusative(), "чёртовый, чёртового")
         );
     }
 
@@ -110,10 +120,12 @@ public class DictionaryTests {
     public void getWordsFromAccentedText() {
         Set<Word> words1 = wordRetrievalService.getWordsFromAccentedText("водяны'х");
         Set<Word> words2 = wordRetrievalService.getWordsFromAccentedText("просро'ченных");
+        Set<Word> words3 = wordRetrievalService.getWordsFromAccentedText("чёртовые");
 
         Assertions.assertAll(
                 () -> Assertions.assertEquals(2, words1.size()),
-                () -> Assertions.assertEquals(1, words2.size())
+                () -> Assertions.assertEquals(1, words2.size()),
+                () -> Assertions.assertEquals(1, words3.size())
         );
     }
 }

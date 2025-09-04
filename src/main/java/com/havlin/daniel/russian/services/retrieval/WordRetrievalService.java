@@ -261,7 +261,12 @@ public class WordRetrievalService {
                         adjectiveDTO.setMasculineDative(wordForm.getAccented());
                         break;
                     case "ru_adj_m_acc":
-                        adjectiveDTO.setMasculineAccusative(wordForm.getAccented());
+                        // animate male nouns will change case differently than inanimate, this will affect adjectives
+                        if (adjectiveDTO.getMasculineAccusative() == null) {
+                            adjectiveDTO.setMasculineAccusative(wordForm.getAccented());
+                        } else {
+                            adjectiveDTO.setMasculineAccusative(adjectiveDTO.getMasculineAccusative() + ", " + wordForm.getAccented());
+                        }
                         break;
                     case "ru_adj_m_inst":
                         adjectiveDTO.setMasculineInstrumental(wordForm.getAccented());
@@ -328,7 +333,12 @@ public class WordRetrievalService {
                         adjectiveDTO.setPluralDative(wordForm.getAccented());
                         break;
                     case "ru_adj_pl_acc":
-                        adjectiveDTO.setPluralAccusative(wordForm.getAccented());
+                        // animate male nouns will change case differently than inanimate, this will affect adjectives
+                        if (adjectiveDTO.getPluralAccusative() == null) {
+                            adjectiveDTO.setPluralAccusative(wordForm.getAccented());
+                        } else {
+                            adjectiveDTO.setPluralAccusative(adjectiveDTO.getPluralAccusative() + ", " + wordForm.getAccented());
+                        }
                         break;
                     case "ru_adj_pl_inst":
                         adjectiveDTO.setPluralInstrumental(wordForm.getAccented());
