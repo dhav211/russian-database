@@ -2,21 +2,23 @@ package com.havlin.daniel.russian.services.retrieval;
 
 import com.havlin.daniel.russian.entities.dictionary.*;
 import com.havlin.daniel.russian.entities.retrieval.*;
+import com.havlin.daniel.russian.repositories.dictionary.WordFormRepository;
 import com.havlin.daniel.russian.repositories.dictionary.WordRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 public class WordRetrievalService {
     private static final Logger log = LoggerFactory.getLogger(WordRetrievalService.class);
     private final WordRepository wordRepository;
+    private final WordFormRepository wordFormRepository;
 
-    public WordRetrievalService(WordRepository wordRepository) {
+    public WordRetrievalService(WordRepository wordRepository, WordFormRepository wordFormRepository) {
         this.wordRepository = wordRepository;
+        this.wordFormRepository = wordFormRepository;
     }
 
     public WordType getWordTypeFromWordId(Long id) {
@@ -27,6 +29,27 @@ public class WordRetrievalService {
         } catch (Exception e) {
             return WordType.ERROR;
         }
+    }
+
+    public Set<Word> getWordsFromBareText(String bareText) {
+        List<WordForm> matchingWordForms = wordFormRepository.findAllByBare(bareText);
+        return sortWordsFromWordFormsById(matchingWordForms);
+    }
+
+    public Set<Word> getWordsFromAccentedText(String accentedText) {
+        List<WordForm> matchingWordsForms = wordFormRepository.findAllByAccented(accentedText);
+        return sortWordsFromWordFormsById(matchingWordsForms);
+    }
+
+    private Set<Word> sortWordsFromWordFormsById(List<WordForm> wordForms) {
+        Set<Word> words = new TreeSet<>(Comparator.comparing(Word::getId));
+
+        // Add each word form to the set, the set will only keep unique values and will sort by id
+        for (WordForm wordForm : wordForms) {
+            words.add(wordForm.getWord());
+        }
+
+        return words;
     }
 
     public WordRetrievalDTO fetchWordById(Long id) {

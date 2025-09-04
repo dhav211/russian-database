@@ -12,6 +12,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
+import java.util.Set;
+
 @SpringBootTest
 public class DictionaryTests {
     @Autowired
@@ -92,7 +94,8 @@ public class DictionaryTests {
         );
     }
 
-    @Test void getAdverbs() {
+    @Test
+    public void getAdverbs() {
         Word word = wordRepository.findById(380L).get();
         AdverbDTO adverbDTO = wordRetrievalService.getAdverbDtoByWord(word);
 
@@ -100,6 +103,17 @@ public class DictionaryTests {
                 () -> Assertions.assertEquals("ма'ло", adverbDTO.getAccentedText()),
                 () -> Assertions.assertEquals("мало", adverbDTO.getBareText()),
                 () -> Assertions.assertEquals(2, adverbDTO.getTranslations().size())
+        );
+    }
+
+    @Test
+    public void getWordsFromAccentedText() {
+        Set<Word> words1 = wordRetrievalService.getWordsFromAccentedText("водяны'х");
+        Set<Word> words2 = wordRetrievalService.getWordsFromAccentedText("просро'ченных");
+
+        Assertions.assertAll(
+                () -> Assertions.assertEquals(2, words1.size()),
+                () -> Assertions.assertEquals(1, words2.size())
         );
     }
 }

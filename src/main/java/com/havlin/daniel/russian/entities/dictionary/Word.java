@@ -34,6 +34,16 @@ public class Word {
     @OneToMany(mappedBy = "word", fetch = FetchType.EAGER)
     private Set<WordForm> wordForms = new HashSet<>();
 
+    public static Word getError(String message) {
+        Word error = new Word();
+        error.setBare(message);
+        error.setAccented(message);
+        error.setWordLevel(WordLevel.ERROR);
+        error.setType(WordType.ERROR);
+
+        return error;
+    }
+
     public void setId(Long id) {
         this.id = id;
     }
