@@ -34,6 +34,18 @@ public class Word {
     @OneToMany(mappedBy = "word", fetch = FetchType.EAGER)
     private Set<WordForm> wordForms = new HashSet<>();
 
+    @OneToOne(cascade = CascadeType.PERSIST)
+    @JoinColumn(name = "definition_id")
+    private Definition definition;
+
+    @ManyToMany
+    @JoinTable(
+            name = "word_sentence",
+            joinColumns = @JoinColumn(name = "word_id"),
+            inverseJoinColumns = @JoinColumn(name = "sentence_id")
+    )
+    private Set<Sentence> sentences = new HashSet<>();
+
     public static Word getError(String message) {
         Word error = new Word();
         error.setBare(message);
@@ -107,5 +119,17 @@ public class Word {
 
     public Set<WordForm> getWordForms() {
         return wordForms;
+    }
+
+    public Definition getDefinition() {
+        return definition;
+    }
+
+    public void setDefinition(Definition definition) {
+        this.definition = definition;
+    }
+
+    public Set<Sentence> getSentences() {
+        return sentences;
     }
 }

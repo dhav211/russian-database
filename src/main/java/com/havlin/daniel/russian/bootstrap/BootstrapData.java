@@ -2,6 +2,8 @@ package com.havlin.daniel.russian.bootstrap;
 
 import com.havlin.daniel.russian.entities.dictionary.*;
 import com.havlin.daniel.russian.repositories.dictionary.*;
+import com.havlin.daniel.russian.services.dictionary.DefinitionService;
+import com.havlin.daniel.russian.utils.StressedWordConverter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
@@ -34,13 +36,19 @@ public class BootstrapData implements CommandLineRunner {
     @Autowired
     private WordFormRepository wordFormRepository;
 
+    @Autowired
+    private DefinitionRepository definitionRepository;
+
+    @Autowired
+    private DefinitionService definitionService;
+
     public final String DELIMITER = ";";
     public final String COMMA_DELIMITER = ",";
 
     @Override
     public void run(String... args) throws Exception {
-        // Uncomment to recreate database
-        // Uncomment to recreate database
+        //if (wordRepository.count() == 0) {
+            //System.out.println("Creating database from csv files");
 //        createWords();
 //        System.out.println("FINISHED words");
 //        createTranslations();
@@ -51,6 +59,54 @@ public class BootstrapData implements CommandLineRunner {
 //        System.out.println("FINISHED verbs");
 //        createWordForms();
 //        System.out.println("FINISHED word forms");
+        //}
+
+        //String word = StressedWordConverter.addStressMarks("домашнее'");
+        //String word = StressedWordConverter.removeStressMarks("людьми́");
+
+    }
+
+    private void createMockDefinition() {
+        // This is the prompt for short definition
+        //Write a short one sentence definition for the word собака in B1 level Russian. Put a ' after the letter of the word that needs to be stressed. Do not use the word собака and do not include a —.
+
+        // This is the prompt for long definition
+        //Write a multiple sentence definition for the word собака using B1 level Russian. Put a ' after the letter of the word that needs to be stressed. Do not use the word собака and do not include a —
+
+        String dogShortDefinition = "Э'то дома'шнее живо'тное, кото'рое о'чень лю'бит люде'й и мо'жет охраня'ть дом.";
+        String dogLongDefinition = "Э'то дома'шнее живо'тное, кото'рое живё'т с людьми'. Оно' о'чень ве'рное и у'мное. Мо'жет охраня'ть дом и игра'ть с детьми'. Лю'бит гуля'ть, бе'гать и есть специа'льную е'ду. Быва'ет ра'зных разме'ров и цвето'в. Мно'гие семьи' держа'т тако'го пито'мца дома'.";
+        //Word cobaka = wordRepository.findById(465L).get();
+        Definition definition = new Definition();
+        definition.setShortDefinition(dogShortDefinition);
+        definition.setLongDefinition(dogLongDefinition);
+
+    }
+
+    private void createMockSentences() {
+        String sentences = "Соба'ка лю'бит игра'ть в па'рке.\n" +
+                "The dog loves to play in the park.\n" +
+                "У меня' есть кра'сивая соба'ка.\n" +
+                "I have a beautiful dog.\n" +
+                "Де'ти дают еду' соба'ке.\n" +
+                "The children give food to the dog.\n" +
+                "Мы ви'дим соба'ку на у'лице.\n" +
+                "We see a dog on the street.\n" +
+                "Ребёнок игра'ет с соба'кой.\n" +
+                "The child plays with the dog.\n" +
+                "Мы говори'м о соба'ке.\n" +
+                "We are talking about the dog.\n" +
+                "Соба'ки бе'гают по двору'.\n" +
+                "Dogs run around the yard.\n" +
+                "У мои'х сосе'дей нет соба'к.\n" +
+                "My neighbors don't have dogs.\n" +
+                "Ветерина'р да'рит лека'рства соба'кам.\n" +
+                "The veterinarian gives medicine to the dogs.\n" +
+                "Мы лю'бим э'тих соба'к.\n" +
+                "We love these dogs.\n" +
+                "Де'ти гуля'ют с соба'ками.\n" +
+                "The children walk with the dogs.\n" +
+                "В кни'ге расска'з о соба'ках.\n" +
+                "The book is a story about dogs.";
     }
 
     private void createWords() throws Exception {
@@ -280,20 +336,13 @@ public class BootstrapData implements CommandLineRunner {
                     word.ifPresent(wordForm::setWord);
                     word.ifPresent(value -> value.getWordForms().add(wordForm));
 
-                    // TODO debug this before building the database to ensure the ( ) are being removed
                     if (values.length > 2) {
-                        // Remove the parenthesis from the word.
-                        if (wordForm.getAccented().contains("(")) {
-                            StringBuilder stringBuilder = new StringBuilder(values[2]);
-                            stringBuilder.deleteCharAt(0);
-                            stringBuilder.deleteCharAt(stringBuilder.length() - 1);
-                            values[2] = stringBuilder.toString();
-                        }
                         wordForm.setFormType(values[2]);
                     }
 
                     if (values.length > 4) {
-                        if (wordForm.getAccented().contains("(")) {
+                        // Remove the parenthesis from the word.
+                        if (values[4].contains("(")) {
                             StringBuilder stringBuilder = new StringBuilder(values[4]);
                             stringBuilder.deleteCharAt(0);
                             stringBuilder.deleteCharAt(stringBuilder.length() - 1);
@@ -303,6 +352,13 @@ public class BootstrapData implements CommandLineRunner {
                     }
 
                     if (values.length > 5) {
+                        // Remove the parenthesis from the word.
+                        if (values[5].contains("(")) {
+                            StringBuilder stringBuilder = new StringBuilder(values[5]);
+                            stringBuilder.deleteCharAt(0);
+                            stringBuilder.deleteCharAt(stringBuilder.length() - 1);
+                            values[5] = stringBuilder.toString();
+                        }
                         wordForm.setBare(values[5]);
                     }
 

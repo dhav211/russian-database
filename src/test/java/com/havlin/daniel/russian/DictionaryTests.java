@@ -6,6 +6,7 @@ import com.havlin.daniel.russian.entities.dictionary.WordLevel;
 import com.havlin.daniel.russian.entities.dictionary.WordType;
 import com.havlin.daniel.russian.entities.retrieval.*;
 import com.havlin.daniel.russian.repositories.dictionary.WordRepository;
+import com.havlin.daniel.russian.services.dictionary.DefinitionService;
 import com.havlin.daniel.russian.services.retrieval.WordRetrievalService;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -24,6 +25,9 @@ public class DictionaryTests {
 
     @Autowired
     private WordRetrievalService wordRetrievalService;
+
+    @Autowired
+    private DefinitionService definitionService;
 
     @Test
     void wordTypesFromId() {
