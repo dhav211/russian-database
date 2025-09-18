@@ -1,6 +1,11 @@
 package com.havlin.daniel.russian.utils;
 
 public class StressedWordConverter {
+    private static final String[] stressedLetters = {"А́", "Б́", "В́", "Ѓ", "Д́", "Е́", "Ё", "Ж́", "З́", "И́", "Й́", "Ќ", "Л́", "М́", "Н́",
+            "О́", "П́", "Р́", "С́", "Т́", "У́", "Ф́", "Х́", "Ц́", "Ч́", "Ш́", "Щ́", "Ъ́", "Ы́", "Ь́", "Э́", "Ю́", "Я́", "а́", "б́", "в́", "ѓ",
+            "д́", "е́", "ё", "ж́", "з́", "и́", "й́", "ќ", "л́", "м́", "н́", "о́", "п́", "р́", "с́", "т́", "у́", "ф́", "х́", "ц́", "ч́", "ш́",
+            "щ́", "ъ́", "ы́", "ь́", "э́", "ю́", "я́"};
+
     public static String addStressMarks(String word) {
         StringBuilder stringBuilder = new StringBuilder(word);
 
@@ -26,10 +31,10 @@ public class StressedWordConverter {
     }
 
     public static String removeStressMarks(String stressedWord) {
-        String[] containingLetters = { "Е́", "А́", "И́", "О́", "У́", "Ы́", "Э́", "Ю́", "Я́", "а́", "е́", "и́", "о́", "у́", "ы́", "э́", "ю́", "я́" };
         StringBuilder stringBuilder = new StringBuilder(stressedWord);
 
-        for (String letter : containingLetters) {
+        // Loop through
+        for (String letter : stressedLetters) {
             if (stressedWord.contains(letter)) {
                 int index = stressedWord.indexOf(letter);
                 stringBuilder.replace(index, index + letter.length(), getUnstressedVariant(letter));
@@ -83,17 +88,54 @@ public class StressedWordConverter {
             case "э́" -> "э'";
             case "ю́" -> "ю'";
             case "я́" -> "я'";
+            // Constants just in case the AI generator is off it's rocker
+            case "Б́" -> "Б";
+            case "б́" -> "б";
+            case "В́" -> "В";
+            case "в́" -> "в";
+            case "Ѓ" -> "Г";
+            case "ѓ" -> "г";
+            case "Д́" -> "Д";
+            case "д́" -> "д";
+            case "Ж́" -> "Ж";
+            case "ж́" -> "ж";
+            case "З́" -> "З";
+            case "з́" -> "з";
+            case "Й́" -> "Й";
+            case "й́" -> "й";
+            case "Ќ" -> "К";
+            case "ќ" -> "к";
+            case "Л́" -> "Л";
+            case "л́" -> "л";
+            case "М́" -> "М";
+            case "м́" -> "м";
+            case "Н́" -> "Н";
+            case "н́" -> "н";
+            case "П́" -> "П";
+            case "п́" -> "п";
+            case "Р́" -> "Р";
+            case "р́" -> "р";
+            case "С́" -> "С";
+            case "с́" -> "с";
+            case "Т́" -> "Т";
+            case "т́" -> "т";
+            case "Ф́" -> "Ф";
+            case "ф́" -> "ф";
+            case "Х́" -> "Х";
+            case "х́" -> "х";
+            case "Ц́" -> "Ц";
+            case "Ч́" -> "Ч";
+            case "ч́" -> "ч";
+            case "ц́" -> "ц";
+            case "Ш́" -> "Ш";
+            case "ш́" -> "ш";
+            case "Щ́" -> "Щ";
+            case "щ́" -> "щ";
+            case "Ъ́" -> "Ъ";
+            case "ъ́" -> "ъ";
+            case "Ь́" -> "Ь";
+            case "ь́" -> "ь";
             default -> "";
         };
     }
-
-    /*
- ( with acute accent)
- (о with acute accent)
- (у with acute accent)
- ( with acute accent)
- (э with acute accent)
-( with acute accent)
-( with acute accent)
-     */
 }

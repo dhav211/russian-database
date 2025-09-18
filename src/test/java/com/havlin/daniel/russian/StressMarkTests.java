@@ -23,7 +23,9 @@ public class StressMarkTests {
                 () -> Assertions.assertEquals("Э'то", StressedWordConverter.removeStressMarks("Э́то")),
                 () -> Assertions.assertEquals("охраня'ть", StressedWordConverter.removeStressMarks("охраня́ть")),
                 () -> Assertions.assertEquals("людьми'", StressedWordConverter.removeStressMarks("людьми́")),
-                () -> Assertions.assertEquals("мо'жет", StressedWordConverter.removeStressMarks("мо́жет"))
+                () -> Assertions.assertEquals("мо'жет", StressedWordConverter.removeStressMarks("мо́жет")),
+                () -> Assertions.assertEquals("личный", StressedWordConverter.removeStressMarks("лич́ный")),
+                () -> Assertions.assertEquals("Боль", StressedWordConverter.removeStressMarks("Б́оль"))
         );
     }
 }

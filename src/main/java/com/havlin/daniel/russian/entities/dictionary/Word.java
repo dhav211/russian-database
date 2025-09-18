@@ -38,12 +38,7 @@ public class Word {
     @JoinColumn(name = "definition_id")
     private Definition definition;
 
-    @ManyToMany
-    @JoinTable(
-            name = "word_sentence",
-            joinColumns = @JoinColumn(name = "word_id"),
-            inverseJoinColumns = @JoinColumn(name = "sentence_id")
-    )
+    @OneToMany(mappedBy = "word", fetch = FetchType.EAGER)
     private Set<Sentence> sentences = new HashSet<>();
 
     public static Word getError(String message) {
@@ -124,7 +119,6 @@ public class Word {
     public Definition getDefinition() {
         return definition;
     }
-
     public void setDefinition(Definition definition) {
         this.definition = definition;
     }

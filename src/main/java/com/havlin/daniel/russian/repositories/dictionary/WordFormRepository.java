@@ -8,4 +8,6 @@ import java.util.List;
 public interface WordFormRepository extends JpaRepository<WordForm, Long> {
     List<WordForm> findAllByAccented(String accentedText);
     List<WordForm> findAllByBare(String bareText);
+    List<WordForm> getAllByWordId(Long id);
+    boolean existsByAccented(String accented);
 }

@@ -3,6 +3,7 @@ package com.havlin.daniel.russian.bootstrap;
 import com.havlin.daniel.russian.entities.dictionary.*;
 import com.havlin.daniel.russian.repositories.dictionary.*;
 import com.havlin.daniel.russian.services.dictionary.DefinitionService;
+import com.havlin.daniel.russian.services.dictionary.SentenceService;
 import com.havlin.daniel.russian.utils.StressedWordConverter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
@@ -42,6 +43,9 @@ public class BootstrapData implements CommandLineRunner {
     @Autowired
     private DefinitionService definitionService;
 
+    @Autowired
+    private SentenceService sentenceService;
+
     public final String DELIMITER = ";";
     public final String COMMA_DELIMITER = ",";
 
@@ -63,6 +67,8 @@ public class BootstrapData implements CommandLineRunner {
 
         //String word = StressedWordConverter.addStressMarks("домашнее'");
         //String word = StressedWordConverter.removeStressMarks("людьми́");
+
+        //sentenceService.createSentencesForWord(wordRepository.findById(170L).get());
 
     }
 
