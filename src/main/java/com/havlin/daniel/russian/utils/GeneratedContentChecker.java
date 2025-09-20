@@ -4,6 +4,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class GeneratedContentChecker {
+    private static final Pattern latinLetterPattern = Pattern.compile(".*[a-zA-Z\\\\p{Punct}].*");
+    private static final Pattern cyrllicStressPattern = Pattern.compile("[а-яёА-ЯЁ]́");
     public static String replaceEnglishCharacters(String russianText) {
         StringBuilder rebuildRussianText = new StringBuilder(russianText);
         char[] englishLetters = {'A', 'a', 'B', 'b', 'C', 'c', 'O', 'o', 'E', 'e', 'Y', 'y', 'R', 'r', 'S', 's', 'T', 't', 'K', 'k', 'M', 'm', 'P', 'p'}; // Possible latin letters claude likes to mix up
@@ -48,14 +50,13 @@ public class GeneratedContentChecker {
     }
 
     public static boolean sentenceContainsLatinLetters(String russianText) {
-        Pattern pattern = Pattern.compile(".*[a-zA-Z\\\\p{Punct}].*");
-        Matcher matcher = pattern.matcher(russianText);
+        Matcher matcher = latinLetterPattern.matcher(russianText);
         return matcher.find();
     }
 
     public static boolean sentenceContainsLettersWithStressMarks(String russianText) {
-        Pattern pattern = Pattern.compile("[а-яёА-ЯЁ]́");
-        Matcher matcher = pattern.matcher(russianText);
+
+        Matcher matcher = cyrllicStressPattern.matcher(russianText);
         return matcher.find();
     }
 }

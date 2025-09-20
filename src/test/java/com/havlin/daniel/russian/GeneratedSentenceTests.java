@@ -1,8 +1,8 @@
 package com.havlin.daniel.russian;
 
-import com.havlin.daniel.russian.entities.dictionary.GeneratedSentenceGrammarForm;
-import com.havlin.daniel.russian.entities.dictionary.ReadingLevel;
-import com.havlin.daniel.russian.entities.dictionary.Sentence;
+import com.havlin.daniel.russian.entities.generated_content.GeneratedSentenceGrammarForm;
+import com.havlin.daniel.russian.entities.generated_content.ReadingLevel;
+import com.havlin.daniel.russian.entities.generated_content.Sentence;
 import com.havlin.daniel.russian.entities.dictionary.Word;
 import com.havlin.daniel.russian.repositories.dictionary.WordRepository;
 import com.havlin.daniel.russian.services.dictionary.SentenceService;
