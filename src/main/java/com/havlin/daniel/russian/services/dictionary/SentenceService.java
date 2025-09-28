@@ -1,19 +1,22 @@
 package com.havlin.daniel.russian.services.dictionary;
 
+import com.anthropic.client.AnthropicClient;
+import com.anthropic.models.messages.Message;
+import com.anthropic.models.messages.MessageCreateParams;
+import com.anthropic.models.messages.Model;
+import com.anthropic.models.messages.TextBlock;
 import com.havlin.daniel.russian.entities.dictionary.*;
-import com.havlin.daniel.russian.repositories.dictionary.SentenceRepository;
+import com.havlin.daniel.russian.entities.generated_content.GeneratedSentenceGrammarForm;
+import com.havlin.daniel.russian.entities.generated_content.ReadingLevel;
+import com.havlin.daniel.russian.entities.generated_content.Sentence;
+import com.havlin.daniel.russian.repositories.generated_content.SentenceRepository;
 import com.havlin.daniel.russian.repositories.dictionary.WordFormRepository;
 import com.havlin.daniel.russian.repositories.dictionary.WordRepository;
 import com.havlin.daniel.russian.utils.GeneratedContentChecker;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -33,29 +36,39 @@ public class SentenceService {
         this.sentenceRepository = sentenceRepository;
     }
 
-    public void createSentencesForWord(Word word) {
+    public void createSentencesForWord(Word word, AnthropicClient anthropicClient) {
         List<Sentence> sentences = new ArrayList<>();
 
-        sentences.addAll(createSentenceListFromGeneratedSentences(callClaudeForSentenceGeneration(word, ReadingLevel.BEGINNER), word, ReadingLevel.BEGINNER));
-        sentences.addAll(createSentenceListFromGeneratedSentences(callClaudeForSentenceGeneration(word, ReadingLevel.INTERMEDIATE), word, ReadingLevel.INTERMEDIATE));
-        sentences.addAll(createSentenceListFromGeneratedSentences(callClaudeForSentenceGeneration(word, ReadingLevel.ADVANCED), word, ReadingLevel.ADVANCED));
+        sentences.addAll(createSentenceListFromGeneratedSentences(callClaudeForSentenceGeneration(word, ReadingLevel.BEGINNER, anthropicClient), word, ReadingLevel.BEGINNER));
+        sentences.addAll(createSentenceListFromGeneratedSentences(callClaudeForSentenceGeneration(word, ReadingLevel.INTERMEDIATE, anthropicClient), word, ReadingLevel.INTERMEDIATE));
+        sentences.addAll(createSentenceListFromGeneratedSentences(callClaudeForSentenceGeneration(word, ReadingLevel.ADVANCED, anthropicClient), word, ReadingLevel.ADVANCED));
 
         sentences.forEach((sentence -> word.getSentences().add(sentence)));
 
-        sentenceRepository.saveAll(sentences);
-        wordRepository.save(word);
+        // TODO uncomment this actually save to the database
+        //sentenceRepository.saveAll(sentences);
+        //wordRepository.save(word);
     }
 
-    private String callClaudeForSentenceGeneration(Word word, ReadingLevel readingLevel) {
-        /* TODO claude will generate these sentences here are some sample prompts
-            Verb
-            Write sentences using the word VERB in LEVEL level russian, then the english translation, and then the verb form the word was in (1st Person Singular, 2nd Person Singular, 3rd Person Singular, 1st Person Plural, 2nd Person Plural, 3rd Person Plural, Past, Imperative, Gerund, Participle Active, Participle Passive). Use the word in every form. Make sure that the grammar is correct because this is for grammar exercises for learning Russian. Only write the sentences and not any numbers, or information about the sentence grammar. Every sentence should be different and unique. Each sentence should be on a different line, including the translation, and grammar case. Make the sentences unique from one another.
-            Noun
-            Write sentences using the word NOUN in LEVEL level russian, then the english translation, the grammar case the noun is in (Nominative, Genitive, Accusative, Prepositional, Instrumental, and Dative). Use the word in every form. Make sure that the grammar is correct because this is for grammar exercises for learning Russian. Only write the sentences and not any numbers, or information about the sentence grammar. Every sentence should be different and unique. Each sentence should be on a different line, including the translation, and grammar case.
-            Adjective will be similar to noun
-            For other and adverb these words do no change so just generate 6 random sentences
-        */
-        return "";
+    private String callClaudeForSentenceGeneration(Word word, ReadingLevel readingLevel, AnthropicClient anthropicClient) {
+        String sentences = "";
+        try{
+            MessageCreateParams params = MessageCreateParams.builder()
+                    .maxTokens(8192L)
+                    .addUserMessage(buildPromptForSentenceGeneration(word, readingLevel))
+                    .model(Model.CLAUDE_3_5_HAIKU_20241022)
+                    .build();
+            Message message = anthropicClient.messages().create(params);
+            Optional<TextBlock> textBlock = message.content().getFirst().text();
+
+            if (textBlock.isPresent()) {
+                sentences = textBlock.get().text();
+            }
+        } catch (Exception e) {
+            // TODO return a real error here
+            System.out.println(e.getMessage());
+        }
+        return sentences;
     }
 
     public List<Sentence> createSentenceListFromGeneratedSentences(String generatedSentences, Word word, ReadingLevel readingLevel) {
@@ -63,11 +76,22 @@ public class SentenceService {
         List<Sentence> sentences = new ArrayList<>();
         // A list of simple POJOs to make reading the separated string easier
         List<SentenceSet> sentenceSets = new ArrayList<>();
-        List<String> split = generatedSentences.lines().toList();
         int sentenceIndex = -1; // starts at -1 because for iteration of the loop increases by 1, so it will be at 0
 
+        // We can't just convert the split lines into a String list because it will be immutable
+        // occasionally claude will want to explain itself on the first line, we will just remove it because it will be in english
+        List<String> split = new ArrayList<String>();
+        generatedSentences.lines()
+                .forEach(split::add);
+        if (GeneratedContentChecker.doesSentenceContainLatinLetters(split.getFirst()))
+            split.removeFirst();
+
+        split = split.stream()
+                .filter((line) -> !Objects.equals(line, ""))
+                .toList();
+
         // Split the sentences into sentence sets
-        // since every 3 lines will be a new sentence we will work with the modulo to determine when a new sentence
+        // since every 3 lines will be a new sentence, we will work with the modulo to determine when a new sentence
         // starts and ends.
         for (int i = 0; i < split.size(); i++) {
             if (i % 3 == 0) {
@@ -88,7 +112,7 @@ public class SentenceService {
                 .map((wordForm -> wordForm.getAccented().toUpperCase()))
                 .toList();
 
-        for (SentenceSet sentenceSet : sentenceSets) {
+        for (SentenceSet sentenceSet: sentenceSets) {
             // Here we want to figure out which word form is used in the sentence
             // Split the sentence into a
             Set<String> splitSentence = Arrays.stream(sentenceSet.russianText
@@ -115,14 +139,29 @@ public class SentenceService {
                     continue;
                 }
 
-                if (GeneratedContentChecker.sentenceContainsLettersWithStressMarks(sentenceSet.russianText)) {
+                if (GeneratedContentChecker.doesSentenceContainLettersWithStressMarks(sentenceSet.russianText)) {
                     sentenceSet.russianText = GeneratedContentChecker.replaceStressedLetters(sentenceSet.russianText);
+                    if (!wordFormRepository.existsByAccented(sentenceSet.russianText)) { // even after being fixed the word still does not exist
+                        continue;
+                    }
                 }
 
-                if (GeneratedContentChecker.sentenceContainsLatinLetters(sentenceSet.russianText))
+                if (GeneratedContentChecker.doesSentenceContainLatinLetters(sentenceSet.russianText))
                 {
                     sentenceSet.russianText = GeneratedContentChecker.replaceEnglishCharacters(sentenceSet.russianText);
+                    if (!wordFormRepository.existsByAccented(sentenceSet.russianText)) { // even after being fixed the word still does not exist
+                        continue;
+                    }
                 }
+
+                List<String> wordsMissingStress = GeneratedContentChecker.findWordsWithMissingStress(sentenceSet.russianText);
+                if (!wordsMissingStress.isEmpty()) {
+                    String sentenceStressCorrected = GeneratedContentChecker.addStressToWords(wordFormRepository, wordsMissingStress, sentenceSet.russianText);
+                    continue;
+                }
+
+                // Occasionally the LLM wants to stress a word with a single vowel, this will correct that issue
+                GeneratedContentChecker.removeSingleVowelStresses(sentenceSet.russianText);
 
                 sentences.add(currentSentence);
             }
@@ -134,26 +173,20 @@ public class SentenceService {
     public String buildPromptForSentenceGeneration(Word word, ReadingLevel readingLevel) {
         StringBuilder prompt = new StringBuilder();
         List<WordForm> forms = wordFormRepository.getAllByWordId(word.getId());
-        prompt.append("Write sentences using the word ");
-        prompt.append(word.getAccented());
-        prompt.append(" in ");
 
+        String level = "";
         if (readingLevel == ReadingLevel.BEGINNER) {
-            prompt.append("B1 level Russian");
+            level = ("B1");
         } else if (readingLevel == ReadingLevel.INTERMEDIATE) {
-            prompt.append("B2 level Russian");
+            level = "B2";
         } else {
-            prompt.append("C1 level Russian");
+            level = "C1";
         }
 
-        prompt.append(", then the english translation, and then the grammar form the word was in without writing the given word only the grammar form. ");
-        prompt.append("Use the word in the following forms");
+        prompt.append("You will be creating Russian grammar exercises using different forms of the word "
+        + word.getAccented() + ". You need to write sentences at " + level + " level Russian proficiency using each specified form of the word.\n" +
+                "Here are the word forms you must use:\n");
 
-        if (word.getType() == WordType.NOUN || word.getType() == WordType.ADJECTIVE) {
-            prompt.append(" and do not mention plural, singular, or the gender of the word, or write the word case");
-        }
-
-        prompt.append(": ");
 
         for (int i = 0; i < forms.size(); i++) {
             if (forms.get(i).getBare() == null) {
@@ -239,22 +272,34 @@ public class SentenceService {
 
             prompt.append(forms.get(i).getAccented());
             if (i == forms.size() - 1) {
-                prompt.append(". ");
+                prompt.append(". \n");
             } else {
-                prompt.append(", ");
+                prompt.append(", \n");
             }
         }
 
-        prompt.append("Make sure that the grammar is correct because this is for grammar exercises for learning Russian." +
-                " Only write the sentences and not any numbers, or information about the sentence grammar. Every sentence" +
-                " should be different and unique. Each sentence should be on a different line, including the translation," +
-                " and grammar case. Include a ' after the letter that needs to be stressed on every word. ");
-
-        if (word.getType() != WordType.ADJECTIVE) {
-            prompt.append("Create 15-25 sentences, some can be humorous or absurd for better memory retention.");
-        } else {
-            prompt.append("Some sentences can be humorous or absurd for better memory retention.");
-        }
+        prompt.append("""
+                For each word form listed above, you must create 2-3 unique sentences. Each sentence should be followed by its English translation, then the grammatical case/form (without mentioning the specific word, gender, number, or using the word "case").
+                
+                Requirements:
+                """ + " - Write sentences at ").append(level).append(" level Russian").append(""" 
+                - Each sentence must be grammatically correct
+                - Include stress marks (') on ALL Russian words where needed, not just the target word. The stress is very important, do not forget.
+                - Make sentences diverse and interesting - some can be humorous or absurd for better memory retention
+                - Every sentence should be completely different and unique
+                - Do not write any numbers, explanations, or additional information
+                - Do not mention plural, singular, gender, or write "case" in your grammar descriptions
+                - Only identify the grammatical form (e.g., "Instrumental", "Genitive", "Short")
+                
+                Format your output exactly like this example:
+                Кресть'яне торгу'ют зе'млями уже' не'сколько лет.
+                Peasants have been trading lands for several years.
+                Instrumental
+                
+                Each sentence, its translation, and grammar form should be on separate lines. Work through each word form in the order provided, creating 2-3 sentences for each form. Include every single form listed in the word forms.
+                
+                Begin writing the sentences immediately without any preamble or additional text.
+                """);
 
         return prompt.toString();
     }

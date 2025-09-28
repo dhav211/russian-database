@@ -1,5 +1,6 @@
-package com.havlin.daniel.russian.entities.dictionary;
+package com.havlin.daniel.russian.entities.generated_content;
 
+import com.havlin.daniel.russian.entities.dictionary.Word;
 import jakarta.persistence.*;
 
 @Entity

@@ -31,6 +31,8 @@ public class GeneratedSentenceTests {
         String promptAdjective = sentenceService.buildPromptForSentenceGeneration(wordRepository.findById(196L).get(), ReadingLevel.ADVANCED);
         String promptAdjective2 = sentenceService.buildPromptForSentenceGeneration(wordRepository.findById(526L).get(), ReadingLevel.BEGINNER);
         String promptAdjective3 = sentenceService.buildPromptForSentenceGeneration(wordRepository.findById(531L).get(), ReadingLevel.INTERMEDIATE);
+        String promptAdjective4 = sentenceService.buildPromptForSentenceGeneration(wordRepository.findById(526L).get(), ReadingLevel.INTERMEDIATE);
+
 
         Assertions.assertAll(
                 () -> Assertions.assertEquals(true, promptVerb.contains("First Person Singular: оста'нусь")),
@@ -330,6 +332,105 @@ public class GeneratedSentenceTests {
             Word word4 = wordRepository.findById(237L).get();
             List<Sentence> createdSentences4 = sentenceService.createSentenceListFromGeneratedSentences(nounSentences4, word4, ReadingLevel.ADVANCED);
 
+            String nounSentences5 = "Пр'и изуче'нии иностр'анных язы'ков мы' часто' занима'емся в ко'мнатах с совреме'нным обор'удованием.\n" +
+                    "When studying foreign languages, we often work in rooms with modern equipment.\n" +
+                    "Prepositional\n" +
+                    "\n" +
+                    "Зд'ание бы'ло пер'еполнено ра'зными ко'мнатами с нео'бычной планир'овкой.\n" +
+                    "The building was filled with various rooms with unusual layouts.\n" +
+                    "Prepositional\n" +
+                    "\n" +
+                    "Архите'ктор управл'ял ко'мнатами так иску'сно, что каза'лось, буд'то прострáнство танц'ует.\n" +
+                    "The architect managed rooms so skillfully that it seemed as if space was dancing.\n" +
+                    "Instrumental\n" +
+                    "\n" +
+                    "Мы любова'лись инте'рьерами, созда'нными опы'тными ко'мнатами.\n" +
+                    "We admired the interiors created by experienced rooms.\n" +
+                    "Instrumental\n" +
+                    "\n" +
+                    "Дизайн'еры подгот'овили нео'бычные ко'мнаты для межд}'народной выст'авки.\n" +
+                    "Designers prepared unusual rooms for the international exhibition.\n" +
+                    "Accusative\n" +
+                    "\n" +
+                    "Я еле' зам'етил ста'рые ко'мнаты в глубин'е музе'я.\n" +
+                    "I barely noticed the old rooms deep in the museum.\n" +
+                    "Accusative\n" +
+                    "\n" +
+                    "Пр'и планир'овании ремо'нта мы уделя'ем особое внима'ние ко'мнатам.\n" +
+                    "When planning repairs, we pay special attention to rooms.\n" +
+                    "Dative\n" +
+                    "\n" +
+                    "Архите'кторы посвят'или ко'мнатам це'лый симпо'зиум.\n" +
+                    "Architects dedicated an entire symposium to rooms.\n" +
+                    "Dative\n" +
+                    "\n" +
+                    "В старом до'ме бы'ло мно'го ко'мнат с таи'нственной истор'ией.\n" +
+                    "In the old house, there were many rooms with mysterious histories.\n" +
+                    "Genitive\n" +
+                    "\n" +
+                    "Мы исследова'ли архитект'уру, изуча'я структ'уру ко'мнат.\n" +
+                    "We studied architecture by examining the structure of rooms.\n" +
+                    "Genitive\n" +
+                    "\n" +
+                    "Про'сторные ко'мнаты созда'ют ощуще'ние свобо'ды.\n" +
+                    "Spacious rooms create a sense of freedom.\n" +
+                    "Nominative\n" +
+                    "\n" +
+                    "Ста'ринные ко'мнаты храня'т дух ми'нувших эпох.\n" +
+                    "Ancient rooms preserve the spirit of past eras.\n" +
+                    "Nominative\n" +
+                    "\n" +
+                    "Мы обсужда'ли инте'рьер в ко'мнате с панор'амным вид'ом.\n" +
+                    "We discussed the interior in a room with a panoramic view.\n" +
+                    "Prepositional\n" +
+                    "\n" +
+                    "В ко'мнате цар'ила особая творч'еская атмосф'ера.\n" +
+                    "A special creative atmosphere reigned in the room.\n" +
+                    "Prepositional\n" +
+                    "\n" +
+                    "Писа'тель владе'л ко'мнатой с невероя'тной лёгкостью.\n" +
+                    "The writer possessed the room with incredible ease.\n" +
+                    "Instrumental\n" +
+                    "\n" +
+                    "Мы любова'лись ко'мнатою, где каждая дет'аль бы'ла прод'умана.\n" +
+                    "We admired the room where every detail was carefully considered.\n" +
+                    "Instrumental\n" +
+                    "\n" +
+                    "Я зашёл в ту ко'мнату, где когда'-то прожива'л извес'тный художник.\n" +
+                    "I entered the room where a famous artist once lived.\n" +
+                    "Accusative\n" +
+                    "\n" +
+                    "Мы тщат'ельно обсле'довали ко'мнату в по'исках улик.\n" +
+                    "We carefully examined the room in search of clues.\n" +
+                    "Accusative\n" +
+                    "\n" +
+                    "Архите'ктор переда'л ключ'и ко'мнате в но'вом зд'ании.\n" +
+                    "The architect handed over the keys to the room in the new building.\n" +
+                    "Dative\n" +
+                    "\n" +
+                    "Мы посвят'или ко'мнате це'лый день реставр'ации.\n" +
+                    "We dedicated an entire day to the room's restoration.\n" +
+                    "Dative\n" +
+                    "\n" +
+                    "Стар'инная ме'бель ко'мнаты расск'азывала свою' исто'рию.\n" +
+                    "The antique furniture of the room told its story.\n" +
+                    "Genitive\n" +
+                    "\n" +
+                    "Атмосф'ера ко'мнаты бы'ла напол'нена воспомина'ниями.\n" +
+                    "The room's atmosphere was filled with memories.\n" +
+                    "Genitive\n" +
+                    "\n" +
+                    "Ко'мната каза'лась живо'й и дыш'ащей.\n" +
+                    "The room seemed alive and breathing.\n" +
+                    "Nominative\n" +
+                    "\n" +
+                    "Ко'мната встрет'ила нас нео'бычным све'том.\n" +
+                    "The room greeted us with unusual light.\n" +
+                    "Nominative";
+
+        Word word5 = wordRepository.findById(230L).get();
+        List<Sentence> createdSentences5 = sentenceService.createSentenceListFromGeneratedSentences(nounSentences5, word5, ReadingLevel.ADVANCED);
+
 
         Assertions.assertAll(
                 () -> Assertions.assertEquals(13, createdSentences1.size()),
@@ -341,7 +442,8 @@ public class GeneratedSentenceTests {
 
     @Test
     public void adjectiveSentences() {
-        String sentence1 = "В диску'ссии о гла'вных достиже'ниях совреме'нной нейробиоло'гии приня'ли уча'стие веду'щие специали'сты.\n" +
+        String sentence1 = "Here's the comprehensive set of sentences with the requested specifications:\n" +
+                "В диску'ссии о гла'вных достиже'ниях совреме'нной нейробиоло'гии приня'ли уча'стие веду'щие специали'сты.\n" +
                 "Leading specialists participated in the discussion about the main achievements of modern neurobiology.\n" +
                 "Prepositional\n" +
                 "Режиссёр воплоти'л свою' конце'пцию гла'вными вырази'тельными сре'дствами кинематогра'фа.\n" +
@@ -526,6 +628,99 @@ public class GeneratedSentenceTests {
                 "Nominative";
         Word word2 = wordRepository.findById(531L).get();
         List<Sentence> createdSentences2 = sentenceService.createSentenceListFromGeneratedSentences(sentence2, word2, ReadingLevel.INTERMEDIATE);
+
+        String sentence3 = "Here's a list of sentences that you wanted:" +
+                "Я надел се'рый шарф, чтобы согреться в холодный день.\n" +
+                "I put on a gray scarf to warm up on a cold day.\n" +
+                "Nominative\n" +
+                "\n" +
+                "В шкафу висит се'рая куртка моего' друга.\n" +
+                "A gray jacket of my friend hangs in the closet.\n" +
+                "Nominative\n" +
+                "\n" +
+                "Мы говорили о се'ром коте', который живёт во дворе'.\n" +
+                "We were talking about the gray cat that lives in the yard.\n" +
+                "Prepositional\n" +
+                "\n" +
+                "Пёс игра'ет с се'рыми игру'шками на по'ле.\n" +
+                "The dog is playing with gray toys in the field.\n" +
+                "Instrumental\n" +
+                "\n" +
+                "Я купи'л се'рые ботинки в магази'не.\n" +
+                "I bought gray shoes in the store.\n" +
+                "Accusative\n" +
+                "\n" +
+                "Свет падает на се'рое обла'ко в небе'.\n" +
+                "Light falls on the gray cloud in the sky.\n" +
+                "Accusative\n" +
+                "\n" +
+                "Я дал се'рому коту' молока'.\n" +
+                "I gave milk to the gray cat.\n" +
+                "Dative\n" +
+                "\n" +
+                "У меня' есть не'сколько се'рых книг.\n" +
+                "I have several gray books.\n" +
+                "Genitive\n" +
+                "\n" +
+                "Се'рые волки бега'ют по ле'су.\n" +
+                "Gray wolves run through the forest.\n" +
+                "Nominative\n" +
+                "\n" +
+                "Мы разговарива'ли в се'ром каби'нете.\n" +
+                "We were talking in the gray office.\n" +
+                "Prepositional\n" +
+                "\n" +
+                "Он управля'ет се'рым автомоби'лем.\n" +
+                "He drives a gray car.\n" +
+                "Instrumental\n" +
+                "\n" +
+                "Се'рое небо предвеща'ет дождь.\n" +
+                "The gray sky predicts rain.\n" +
+                "Nominative\n" +
+                "\n" +
+                "Я пода'рил се'рому дру'гу интере'сную кни'гу.\n" +
+                "I gave an interesting book to the gray friend.\n" +
+                "Dative\n" +
+                "\n" +
+                "Я увиде'л се'рого кота' во дворе'.\n" +
+                "I saw a gray cat in the yard.\n" +
+                "Accusative\n" +
+                "\n" +
+                "Она' восхища'ется се'рой ку'рткой.\n" +
+                "She admires the gray jacket.\n" +
+                "Genitive\n" +
+                "\n" +
+                "Се'рая кошка спит на по'душке.\n" +
+                "The gray cat is sleeping on the pillow.\n" +
+                "Nominative\n" +
+                "\n" +
+                "Мы говори'ли о се'рой по'годе.\n" +
+                "We were talking about the gray weather.\n" +
+                "Prepositional\n" +
+                "\n" +
+                "Он рабо'тает с се'рой краской.\n" +
+                "He works with gray paint.\n" +
+                "Instrumental\n" +
+                "\n" +
+                "Зве'ри сера.\n" +
+                "Animals are gray.\n" +
+                "Short\n" +
+                "\n" +
+                "Не'бо се'ро.\n" +
+                "The sky is gray.\n" +
+                "Short\n" +
+                "\n" +
+                "Обла'ка сера'.\n" +
+                "Clouds are gray.\n" +
+                "Short\n" +
+                "\n" +
+                "Лес сер.\n" +
+                "The forest is gray.\n" +
+                "Short";
+
+        Word word3 = wordRepository.findById(526L).get();
+        List<Sentence> createdSentences3 = sentenceService.createSentenceListFromGeneratedSentences(sentence3, word3, ReadingLevel.BEGINNER);
+
 
         Assertions.assertAll(
                 () -> Assertions.assertEquals(33, createdSentences1.size()),

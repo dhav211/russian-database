@@ -1,19 +1,17 @@
 package com.havlin.daniel.russian.bootstrap;
 
 import com.havlin.daniel.russian.entities.dictionary.*;
+import com.havlin.daniel.russian.entities.generated_content.Definition;
 import com.havlin.daniel.russian.repositories.dictionary.*;
+import com.havlin.daniel.russian.repositories.generated_content.DefinitionRepository;
 import com.havlin.daniel.russian.services.dictionary.DefinitionService;
 import com.havlin.daniel.russian.services.dictionary.SentenceService;
-import com.havlin.daniel.russian.utils.StressedWordConverter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
 import java.io.BufferedReader;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 

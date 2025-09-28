@@ -1,10 +1,8 @@
 package com.havlin.daniel.russian;
 
-import com.havlin.daniel.russian.entities.dictionary.VerbAspect;
-import com.havlin.daniel.russian.entities.dictionary.Word;
-import com.havlin.daniel.russian.entities.dictionary.WordLevel;
-import com.havlin.daniel.russian.entities.dictionary.WordType;
+import com.havlin.daniel.russian.entities.dictionary.*;
 import com.havlin.daniel.russian.entities.retrieval.*;
+import com.havlin.daniel.russian.repositories.dictionary.WordFormRepository;
 import com.havlin.daniel.russian.repositories.dictionary.WordRepository;
 import com.havlin.daniel.russian.services.dictionary.DefinitionService;
 import com.havlin.daniel.russian.services.retrieval.WordRetrievalService;
@@ -13,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -28,6 +27,9 @@ public class DictionaryTests {
 
     @Autowired
     private DefinitionService definitionService;
+
+    @Autowired
+    private WordFormRepository wordFormRepository;
 
     @Test
     void wordTypesFromId() {

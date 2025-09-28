@@ -1,4 +1,4 @@
-package com.havlin.daniel.russian.entities.dictionary;
+package com.havlin.daniel.russian.entities.generated_content;
 
 public enum GeneratedSentenceGrammarForm {
     NOMINATIVE,

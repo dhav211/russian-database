@@ -1,5 +1,7 @@
 package com.havlin.daniel.russian.entities.dictionary;
 
+import com.havlin.daniel.russian.entities.generated_content.Definition;
+import com.havlin.daniel.russian.entities.generated_content.Sentence;
 import jakarta.persistence.*;
 
 import java.util.HashSet;
