@@ -26,10 +26,8 @@ public class DefinitionService {
     public void createDefinitionForWord(Word word, AnthropicClient client) {
         DefinitionSet definitionSet = generateDefinition(word.getAccented(), client);
         Definition definition = new Definition();
-        definition.setLongDefinition(definitionSet.longDefinition);
-        definition.setShortDefinition(definitionSet.shortDefinition);
 
-        word.setDefinition(definition);
+        //word.setDefinition(definition);
 
         // TODO uncomment to save to database
         //definitionRepository.save(definition);

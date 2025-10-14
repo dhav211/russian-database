@@ -9,7 +9,6 @@ public class StressedWordConverter {
     public static String addStressMarks(String word) {
         StringBuilder stringBuilder = new StringBuilder(word);
 
-
         // Loop through the string until we find the ' indicating the stress
         for (int i = 0; i < word.length(); i++) {
             if (word.charAt(i) == '\'') {
@@ -33,10 +32,12 @@ public class StressedWordConverter {
     public static String removeStressMarks(String stressedWord) {
         StringBuilder stringBuilder = new StringBuilder(stressedWord);
 
-        // Loop through
+        // Loop through each of the possible stress letters, we will attempt to remove any possible occurrence of this
+        // letter in the sentence. The while loop will repeatably attempt to remove the letter, and if one isn't located
+        // it will break from the inner loop and go to the next letter
         for (String letter : stressedLetters) {
-            if (stressedWord.contains(letter)) {
-                int index = stressedWord.indexOf(letter);
+            while (stringBuilder.toString().contains(letter)) {
+                int index = stringBuilder.toString().indexOf(letter);
                 stringBuilder.replace(index, index + letter.length(), getUnstressedVariant(letter));
             }
         }

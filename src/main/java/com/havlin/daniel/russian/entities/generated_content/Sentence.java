@@ -19,9 +19,14 @@ public class Sentence {
 
     private String englishTranslation;
 
+    @Enumerated(EnumType.STRING)
     private ReadingLevel readingLevel;
 
+    @Enumerated(EnumType.STRING)
     private GeneratedSentenceGrammarForm grammarForm;
+
+    @Enumerated(EnumType.STRING)
+    private GeneratedContentStatus status;
 
     private int wordPosition;
 
@@ -73,56 +78,83 @@ public class Sentence {
         // grammarForm string is given from the generated prompt which is held in the SentenceSet POJO
         grammarForm = grammarForm.toUpperCase();
 
-        if (grammarForm.contains("NOMINATIVE"))
-            this.setGrammarForm(GeneratedSentenceGrammarForm.NOMINATIVE);
-        else if (grammarForm.contains("GENITIVE"))
-            this.setGrammarForm(GeneratedSentenceGrammarForm.GENITIVE);
-        else if (grammarForm.contains( "ACCUSATIVE"))
-            this.setGrammarForm(GeneratedSentenceGrammarForm.ACCUSATIVE);
-        else if (grammarForm.contains( "PREPOSITIONAL"))
-            this.setGrammarForm(GeneratedSentenceGrammarForm.PREPOSITIONAL);
-        else if (grammarForm.contains( "INSTRUMENTAL"))
-            this.setGrammarForm(GeneratedSentenceGrammarForm.INSTRUMENTAL);
-        else if (grammarForm.contains( "DATIVE"))
-            this.setGrammarForm(GeneratedSentenceGrammarForm.DATIVE);
-        else if (grammarForm.contains("FIRST PERSON SINGULAR"))
-            this.setGrammarForm(GeneratedSentenceGrammarForm.FIRST_PERSON_SINGULAR);
-        else if (grammarForm.contains("SECOND PERSON SINGULAR"))
-            this.setGrammarForm(GeneratedSentenceGrammarForm.SECOND_PERSON_SINGULAR);
-        else if (grammarForm.contains("THIRD PERSON SINGULAR"))
-            this.setGrammarForm(GeneratedSentenceGrammarForm.THIRD_PERSON_SINGULAR);
-        else if (grammarForm.contains( "FIRST PERSON PLURAL"))
-            this.setGrammarForm(GeneratedSentenceGrammarForm.FIRST_PERSON_PLURAL);
-        else if (grammarForm.contains( "SECOND PERSON PLURAL"))
-            this.setGrammarForm(GeneratedSentenceGrammarForm.SECOND_PERSON_PLURAL);
-        else if (grammarForm.contains( "THIRD PERSON PLURAL"))
-            this.setGrammarForm(GeneratedSentenceGrammarForm.THIRD_PERSON_PLURAL);
-        else if (grammarForm.contains("PAST"))
-            this.setGrammarForm(GeneratedSentenceGrammarForm.PAST);
-        else if (grammarForm.contains("IMPERATIVE SINGULAR"))
-            this.setGrammarForm(GeneratedSentenceGrammarForm.IMPERATIVE_SINGULAR);
-        else if (grammarForm.contains("IMPERATIVE PLURAL"))
-            this.setGrammarForm(GeneratedSentenceGrammarForm.IMPERATIVE_PLURAL);
-        else if (grammarForm.contains( "GERUND PAST"))
-            this.setGrammarForm(GeneratedSentenceGrammarForm.GERUND_PAST);
-        else if (grammarForm.contains( "GERUND PRESENT"))
-            this.setGrammarForm(GeneratedSentenceGrammarForm.GERUND_PRESENT);
-        else if (grammarForm.contains( "PARTICIPLE ACTIVE PRESENT"))
-            this.setGrammarForm(GeneratedSentenceGrammarForm.PARTICIPLE_ACTIVE_PRESENT);
-        else if (grammarForm.contains( "PARTICIPLE ACTIVE PAST"))
-            this.setGrammarForm(GeneratedSentenceGrammarForm.PARTICIPLE_ACTIVE_PAST);
-        else if (grammarForm.contains( "PARTICIPLE PASSIVE PRESENT"))
-            this.setGrammarForm(GeneratedSentenceGrammarForm.PARTICIPLE_PASSIVE_PRESENT);
-        else if (grammarForm.contains( "PARTICIPLE PASSIVE PAST"))
-            this.setGrammarForm(GeneratedSentenceGrammarForm.PARTICIPLE_PASSIVE_PAST);
-        else if (grammarForm.contains( "SUPERLATIVE"))
-            this.setGrammarForm(GeneratedSentenceGrammarForm.SUPERLATIVE);
-        else if (grammarForm.contains( "COMPARATIVE"))
-            this.setGrammarForm(GeneratedSentenceGrammarForm.COMPARATIVE);
-        else if (grammarForm.contains( "SHORT"))
-            this.setGrammarForm(GeneratedSentenceGrammarForm.SHORT);
-        else
-            this.setGrammarForm(GeneratedSentenceGrammarForm.ERROR);
+        switch (grammarForm) {
+            case "NOMINATIVE":
+                this.setGrammarForm(GeneratedSentenceGrammarForm.NOMINATIVE);
+                break;
+            case "GENITIVE":
+                this.setGrammarForm(GeneratedSentenceGrammarForm.GENITIVE);
+                break;
+            case "ACCUSATIVE":
+                this.setGrammarForm(GeneratedSentenceGrammarForm.ACCUSATIVE);
+                break;
+            case "PREPOSITIONAL":
+                this.setGrammarForm(GeneratedSentenceGrammarForm.PREPOSITIONAL);
+                break;
+            case "INSTRUMENTAL":
+                this.setGrammarForm(GeneratedSentenceGrammarForm.INSTRUMENTAL);
+                break;
+            case "DATIVE":
+                this.setGrammarForm(GeneratedSentenceGrammarForm.DATIVE);
+                break;
+            case "FIRST PERSON SINGULAR":
+                this.setGrammarForm(GeneratedSentenceGrammarForm.FIRST_PERSON_SINGULAR);
+                break;
+            case "SECOND PERSON SINGULAR":
+                this.setGrammarForm(GeneratedSentenceGrammarForm.SECOND_PERSON_SINGULAR);
+                break;
+            case "THIRD PERSON SINGULAR":
+                this.setGrammarForm(GeneratedSentenceGrammarForm.THIRD_PERSON_SINGULAR);
+                break;
+            case "FIRST PERSON PLURAL":
+                this.setGrammarForm(GeneratedSentenceGrammarForm.FIRST_PERSON_PLURAL);
+                break;
+            case "SECOND PERSON PLURAL":
+                this.setGrammarForm(GeneratedSentenceGrammarForm.SECOND_PERSON_PLURAL);
+                break;
+            case "THIRD PERSON PLURAL":
+                this.setGrammarForm(GeneratedSentenceGrammarForm.THIRD_PERSON_PLURAL);
+                break;
+            case "PAST":
+                this.setGrammarForm(GeneratedSentenceGrammarForm.PAST);
+                break;
+            case "IMPERATIVE SINGULAR":
+                this.setGrammarForm(GeneratedSentenceGrammarForm.IMPERATIVE_SINGULAR);
+                break;
+            case "IMPERATIVE PLURAL":
+                this.setGrammarForm(GeneratedSentenceGrammarForm.IMPERATIVE_PLURAL);
+                break;
+            case "GERUND PAST":
+                this.setGrammarForm(GeneratedSentenceGrammarForm.GERUND_PAST);
+                break;
+            case "GERUND PRESENT":
+                this.setGrammarForm(GeneratedSentenceGrammarForm.GERUND_PRESENT);
+                break;
+            case "PARTICIPLE ACTIVE PRESENT":
+                this.setGrammarForm(GeneratedSentenceGrammarForm.PARTICIPLE_ACTIVE_PRESENT);
+                break;
+            case "PARTICIPLE ACTIVE PAST":
+                this.setGrammarForm(GeneratedSentenceGrammarForm.PARTICIPLE_ACTIVE_PAST);
+                break;
+            case "PARTICIPLE PASSIVE PRESENT":
+                this.setGrammarForm(GeneratedSentenceGrammarForm.PARTICIPLE_PASSIVE_PRESENT);
+                break;
+            case "PARTICIPLE PASSIVE PAST":
+                this.setGrammarForm(GeneratedSentenceGrammarForm.PARTICIPLE_PASSIVE_PAST);
+                break;
+            case "SUPERLATIVE":
+                this.setGrammarForm(GeneratedSentenceGrammarForm.SUPERLATIVE);
+                break;
+            case "COMPARATIVE":
+                this.setGrammarForm(GeneratedSentenceGrammarForm.COMPARATIVE);
+                break;
+            case "SHORT":
+                this.setGrammarForm(GeneratedSentenceGrammarForm.SHORT);
+                break;
+            default:
+                this.setGrammarForm(GeneratedSentenceGrammarForm.ERROR);
+                break;
+        }
 
     }
 
@@ -143,5 +175,13 @@ public class Sentence {
                 break;
             }
         }
+    }
+
+    public GeneratedContentStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(GeneratedContentStatus status) {
+        this.status = status;
     }
 }

@@ -32,6 +32,15 @@ public class DictionaryTests {
     private WordFormRepository wordFormRepository;
 
     @Test
+    void findAllAccentedByBareText() {
+        List<String> accented = wordFormRepository.findAccentedByBare("достижения");
+        List<String> jumbled = wordFormRepository.findAccentedByBare("фывапцук");
+
+        Assertions.assertEquals(3, accented.size());
+        Assertions.assertEquals(0, jumbled.size());
+    }
+
+    @Test
     void wordTypesFromId() {
         WordType verb = wordRetrievalService.getWordTypeFromWordId(53L);
         WordType noun = wordRetrievalService.getWordTypeFromWordId(12L);

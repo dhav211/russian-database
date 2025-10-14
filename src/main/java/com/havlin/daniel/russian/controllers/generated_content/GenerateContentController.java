@@ -9,6 +9,8 @@ import com.havlin.daniel.russian.repositories.dictionary.WordFormRepository;
 import com.havlin.daniel.russian.repositories.dictionary.WordRepository;
 import com.havlin.daniel.russian.services.dictionary.DefinitionService;
 import com.havlin.daniel.russian.services.dictionary.SentenceService;
+import com.havlin.daniel.russian.services.generated_content.AiModel;
+import com.havlin.daniel.russian.services.generated_content.GeneratedContentService;
 import com.havlin.daniel.russian.services.retrieval.WordRetrievalService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -24,34 +26,22 @@ public class GenerateContentController {
     private String claudeKey;
 
     private final WordRetrievalService wordRetrievalService;
-    private final DefinitionService definitionService;
-    private final SentenceService sentenceService;
-    private AnthropicClient anthropicClient;
+    private final GeneratedContentService generatedContentService;
 
     public GenerateContentController(WordRetrievalService wordRetrievalService,
-                                     DefinitionService definitionService,
-                                     SentenceService sentenceService) {
+                                     GeneratedContentService generatedContentService) {
         this.wordRetrievalService = wordRetrievalService;
-        this.definitionService = definitionService;
-        this.sentenceService = sentenceService;
+        this.generatedContentService = generatedContentService;
     }
 
     @PostMapping(value = "/addAll/{accentedWord}")
     public void addAllInitialContentForWord(@PathVariable("accentedWord") String accentedWord) {
-        anthropicClient = AnthropicOkHttpClient.builder()
-                .apiKey(claudeKey)
-                .build();
         try {
             Set<Word> words = wordRetrievalService.getWordsFromAccentedText(accentedWord);
 
             if (!words.isEmpty()) {
                 for (Word word : words) {
-                    if (word.getDefinition() == null) {
-                        //definitionService.createDefinitionForWord(word, anthropicClient);
-                    }
-                    if (word.getSentences().isEmpty()) {
-                        sentenceService.createSentencesForWord(word, anthropicClient);
-                    }
+                    generatedContentService.generateContentForWord(word, AiModel.CLAUDE);
                 }
             }
         } catch (Exception e) {

@@ -1,9 +1,11 @@
-package com.havlin.daniel.russian;
+package com.havlin.daniel.russian.services.generated_content;
 
+import com.anthropic.client.AnthropicClient;
 import com.havlin.daniel.russian.entities.generated_content.GeneratedSentenceGrammarForm;
 import com.havlin.daniel.russian.entities.generated_content.ReadingLevel;
 import com.havlin.daniel.russian.entities.generated_content.Sentence;
 import com.havlin.daniel.russian.entities.dictionary.Word;
+import com.havlin.daniel.russian.repositories.dictionary.WordFormRepository;
 import com.havlin.daniel.russian.repositories.dictionary.WordRepository;
 import com.havlin.daniel.russian.services.dictionary.SentenceService;
 import org.junit.jupiter.api.Assertions;
@@ -13,6 +15,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.List;
 
+import static org.mockito.Mockito.mock;
+
 @SpringBootTest
 public class GeneratedSentenceTests {
     @Autowired
@@ -21,17 +25,29 @@ public class GeneratedSentenceTests {
     @Autowired
     private WordRepository wordRepository;
 
+    @Autowired
+    private WordFormRepository wordFormRepository;
+
+    @Autowired
+    private GeneratedContentService generatedContentService;
+
+    @Test
+    public void threadTests() {
+    generatedContentService.generateContentForWord(wordRepository.findById(170L).get(), AiModel.CLAUDE);
+    }
+
     @Test
     public void promptGeneration() {
-        String promptVerb = sentenceService.buildPromptForSentenceGeneration(wordRepository.findById(170L).get(), ReadingLevel.BEGINNER);
-        String promptNoun = sentenceService.buildPromptForSentenceGeneration(wordRepository.findById(153L).get(), ReadingLevel.INTERMEDIATE);
-        String promptNoun2 = sentenceService.buildPromptForSentenceGeneration(wordRepository.findById(230L).get(), ReadingLevel.BEGINNER);
-        String promptNoun3 = sentenceService.buildPromptForSentenceGeneration(wordRepository.findById(231L).get(), ReadingLevel.INTERMEDIATE);
-        String promptNoun4 = sentenceService.buildPromptForSentenceGeneration(wordRepository.findById(237L).get(), ReadingLevel.ADVANCED);
-        String promptAdjective = sentenceService.buildPromptForSentenceGeneration(wordRepository.findById(196L).get(), ReadingLevel.ADVANCED);
-        String promptAdjective2 = sentenceService.buildPromptForSentenceGeneration(wordRepository.findById(526L).get(), ReadingLevel.BEGINNER);
-        String promptAdjective3 = sentenceService.buildPromptForSentenceGeneration(wordRepository.findById(531L).get(), ReadingLevel.INTERMEDIATE);
-        String promptAdjective4 = sentenceService.buildPromptForSentenceGeneration(wordRepository.findById(526L).get(), ReadingLevel.INTERMEDIATE);
+        PromptGenerator promptGenerator = new PromptGenerator(wordFormRepository);
+        String promptVerb = promptGenerator.buildPromptForSentenceGeneration(wordRepository.findById(170L).get(), ReadingLevel.BEGINNER);
+        String promptNoun = promptGenerator.buildPromptForSentenceGeneration(wordRepository.findById(153L).get(), ReadingLevel.INTERMEDIATE);
+        String promptNoun2 = promptGenerator.buildPromptForSentenceGeneration(wordRepository.findById(230L).get(), ReadingLevel.BEGINNER);
+        String promptNoun3 = promptGenerator.buildPromptForSentenceGeneration(wordRepository.findById(231L).get(), ReadingLevel.INTERMEDIATE);
+        String promptNoun4 = promptGenerator.buildPromptForSentenceGeneration(wordRepository.findById(237L).get(), ReadingLevel.ADVANCED);
+        String promptAdjective = promptGenerator.buildPromptForSentenceGeneration(wordRepository.findById(196L).get(), ReadingLevel.ADVANCED);
+        String promptAdjective2 = promptGenerator.buildPromptForSentenceGeneration(wordRepository.findById(526L).get(), ReadingLevel.BEGINNER);
+        String promptAdjective3 = promptGenerator.buildPromptForSentenceGeneration(wordRepository.findById(531L).get(), ReadingLevel.INTERMEDIATE);
+        String promptAdjective4 = promptGenerator.buildPromptForSentenceGeneration(wordRepository.findById(526L).get(), ReadingLevel.INTERMEDIATE);
 
 
         Assertions.assertAll(
@@ -47,6 +63,8 @@ public class GeneratedSentenceTests {
 
     @Test
     public void verbSentence() {
+        SentenceGenerator sentenceGenerator = new SentenceGenerator(wordFormRepository);
+
         String successfulSentences = "Учени'к, оста'вшийся по'сле уро'ков, убира'л класс.\n" +
                 "The student who stayed after lessons was cleaning the classroom.\n" +
                 "Participle Active Past\n" +
@@ -83,14 +101,15 @@ public class GeneratedSentenceTests {
                 "Па'па оста'лся чита'ть га'зету в кре'сле.\n" +
                 "Dad stayed to read the newspaper in the armchair.\n" +
                 "Past\n" +
-                "Оста'ньтесь, пожа'луйста, на чай с печеньем.\n" +
+                "Оста'ньтесь, пожа'луйста, на чай с пече'ньем.\n" +
                 "Please stay for tea with cookies.\n" +
                 "Imperative Plural\n" +
-                "Оста'нься с нами на выходны'е.\n" +
+                "Оста'нься с на'ми на выходны'е.\n" +
                 "Stay with us for the weekend.\n" +
                 "Imperative Singular";
 
-        String unsuccessfulSentences = "Yчени'к, оста'вшийся по'сле уро'ков, убира'л класс.\n" +
+        String unsuccessfulSentences = "Here's the comprehensive list of sentences using the word остаться. \n" +
+                "Yчени'к, оста'вшийся по'сле уро'ков, убира'л класс.\n" +
                 "The student who stayed after lessons was cleaning the classroom.\n" +
                 "Participle Active Past\n" +
                 "Оста'вшись одна' до'ма, де'вочка испуга'лась.\n" +
@@ -135,13 +154,14 @@ public class GeneratedSentenceTests {
 
         Word word = wordRepository.findById(170L).get();
 
-        List<Sentence> createdSentences = sentenceService.createSentenceListFromGeneratedSentences(successfulSentences, word, ReadingLevel.BEGINNER);
-        List<Sentence> createdSentencesWithUnsuccessful = sentenceService.createSentenceListFromGeneratedSentences(unsuccessfulSentences, word, ReadingLevel.BEGINNER);
+        List<Sentence> createdSentences = sentenceGenerator.createSentenceListFromGeneratedSentences(successfulSentences, word, ReadingLevel.BEGINNER);
+        List<Sentence> createdSentencesWithUnsuccessful = sentenceGenerator.createSentenceListFromGeneratedSentences(unsuccessfulSentences, word, ReadingLevel.BEGINNER);
+
 
         Assertions.assertAll(
                 () -> Assertions.assertEquals(14, createdSentences.size()),
                 () -> Assertions.assertEquals(GeneratedSentenceGrammarForm.PARTICIPLE_ACTIVE_PAST, createdSentences.get(0).getGrammarForm()),
-                () -> Assertions.assertEquals("Оста'нься с нами на выходны'е.", createdSentences.get(13).getText()),
+                () -> Assertions.assertEquals("Оста'нься с на'ми на выходны'е.", createdSentences.get(13).getText()),
                 () -> Assertions.assertFalse(createdSentencesWithUnsuccessful.size() == 9),
                 () -> Assertions.assertEquals(ReadingLevel.BEGINNER, createdSentencesWithUnsuccessful.get(0).getReadingLevel()),
                 () -> Assertions.assertEquals(1, createdSentences.get(0).getWordPosition()),
@@ -151,6 +171,8 @@ public class GeneratedSentenceTests {
 
     @Test
     public void nounSentence() {
+        SentenceGenerator sentenceGenerator = new SentenceGenerator(wordFormRepository);
+
         String nounSentences1 = "В э'тих зе'млях обита'ют ди'кие живо'тные.\n" +
                 "Wild animals inhabit these lands.\n" +
                 "Prepositional\n" +
@@ -191,7 +213,7 @@ public class GeneratedSentenceTests {
                 "Earth rotates around its axis.\n" +
                 "Nominative";
             Word word1 = wordRepository.findById(153L).get();
-            List<Sentence> createdSentences1 = sentenceService.createSentenceListFromGeneratedSentences(nounSentences1, word1, ReadingLevel.INTERMEDIATE);
+            List<Sentence> createdSentences1 = sentenceGenerator.createSentenceListFromGeneratedSentences(nounSentences1, word1, ReadingLevel.INTERMEDIATE);
 
             String nounSentences2 = "В э'тих ко'мнатах жи'ли студе'нты университе'та.\n" +
                     "University students lived in these rooms.\n" +
@@ -234,7 +256,7 @@ public class GeneratedSentenceTests {
                     "Nominative";
 
             Word word2 = wordRepository.findById(230L).get();
-            List<Sentence> createdSentences2 = sentenceService.createSentenceListFromGeneratedSentences(nounSentences2, word2, ReadingLevel.BEGINNER);
+            List<Sentence> createdSentences2 = sentenceGenerator.createSentenceListFromGeneratedSentences(nounSentences2, word2, ReadingLevel.BEGINNER);
 
         String nounSentences3 = "В э'тих у'трах всегда' слы'шно пе'ние птиц.\n" +
                     "In these mornings you can always hear birds singing.\n" +
@@ -289,7 +311,7 @@ public class GeneratedSentenceTests {
                     "Nominative";
 
             Word word3 = wordRepository.findById(231L).get();
-            List<Sentence> createdSentences3 = sentenceService.createSentenceListFromGeneratedSentences(nounSentences3, word3, ReadingLevel.INTERMEDIATE);
+            List<Sentence> createdSentences3 = sentenceGenerator.createSentenceListFromGeneratedSentences(nounSentences3, word3, ReadingLevel.INTERMEDIATE);
 
 
         String nounSentences4 = "На широ'ких плеча'х атле'та заме'тны сле'ды интенси'вных трениро'вок.\n" +
@@ -330,7 +352,7 @@ public class GeneratedSentenceTests {
                     "Nominative";
 
             Word word4 = wordRepository.findById(237L).get();
-            List<Sentence> createdSentences4 = sentenceService.createSentenceListFromGeneratedSentences(nounSentences4, word4, ReadingLevel.ADVANCED);
+            List<Sentence> createdSentences4 = sentenceGenerator.createSentenceListFromGeneratedSentences(nounSentences4, word4, ReadingLevel.ADVANCED);
 
             String nounSentences5 = "Пр'и изуче'нии иностр'анных язы'ков мы' часто' занима'емся в ко'мнатах с совреме'нным обор'удованием.\n" +
                     "When studying foreign languages, we often work in rooms with modern equipment.\n" +
@@ -429,7 +451,7 @@ public class GeneratedSentenceTests {
                     "Nominative";
 
         Word word5 = wordRepository.findById(230L).get();
-        List<Sentence> createdSentences5 = sentenceService.createSentenceListFromGeneratedSentences(nounSentences5, word5, ReadingLevel.ADVANCED);
+        List<Sentence> createdSentences5 = sentenceGenerator.createSentenceListFromGeneratedSentences(nounSentences5, word5, ReadingLevel.ADVANCED);
 
 
         Assertions.assertAll(
@@ -442,6 +464,8 @@ public class GeneratedSentenceTests {
 
     @Test
     public void adjectiveSentences() {
+        SentenceGenerator sentenceGenerator = new SentenceGenerator(wordFormRepository);
+
         String sentence1 = "Here's the comprehensive set of sentences with the requested specifications:\n" +
                 "В диску'ссии о гла'вных достиже'ниях совреме'нной нейробиоло'гии приня'ли уча'стие веду'щие специали'сты.\n" +
                 "Leading specialists participated in the discussion about the main achievements of modern neurobiology.\n" +
@@ -543,7 +567,7 @@ public class GeneratedSentenceTests {
                 "Today's decision by the board of directors is more main than all previous resolutions.\n" +
                 "Comparative";
         Word word1 = wordRepository.findById(196L).get();
-        List<Sentence> createdSentences1 = sentenceService.createSentenceListFromGeneratedSentences(sentence1, word1, ReadingLevel.ADVANCED);
+        List<Sentence> createdSentences1 = sentenceGenerator.createSentenceListFromGeneratedSentences(sentence1, word1, ReadingLevel.ADVANCED);
 
         String sentence2 = "В обсужде'нии основны'х страте'гий разви'тия компа'нии уча'ствовали все менедже'ры.\n" +
                 "All managers participated in the discussion of the basic development strategies of the company.\n" +
@@ -627,7 +651,7 @@ public class GeneratedSentenceTests {
                 "The main principle of our company's work is honesty and transparency.\n" +
                 "Nominative";
         Word word2 = wordRepository.findById(531L).get();
-        List<Sentence> createdSentences2 = sentenceService.createSentenceListFromGeneratedSentences(sentence2, word2, ReadingLevel.INTERMEDIATE);
+        List<Sentence> createdSentences2 = sentenceGenerator.createSentenceListFromGeneratedSentences(sentence2, word2, ReadingLevel.INTERMEDIATE);
 
         String sentence3 = "Here's a list of sentences that you wanted:" +
                 "Я надел се'рый шарф, чтобы согреться в холодный день.\n" +
@@ -719,12 +743,35 @@ public class GeneratedSentenceTests {
                 "Short";
 
         Word word3 = wordRepository.findById(526L).get();
-        List<Sentence> createdSentences3 = sentenceService.createSentenceListFromGeneratedSentences(sentence3, word3, ReadingLevel.BEGINNER);
+        List<Sentence> createdSentences3 = sentenceGenerator.createSentenceListFromGeneratedSentences(sentence3, word3, ReadingLevel.BEGINNER);
 
 
         Assertions.assertAll(
                 () -> Assertions.assertEquals(33, createdSentences1.size()),
                 () -> Assertions.assertEquals(27, createdSentences2.size())
         );
+    }
+
+    @Test
+    public void mockClaudeCall() {
+
+        //        // Mock the client
+//        AnthropicClient mockClient = mock(AnthropicClient.class);
+//
+//        // Mock the response
+//        MessageResponse mockResponse = mock(MessageResponse.class);
+//        when(mockResponse.getContent()).thenReturn("Mocked sentence response");
+//
+//        // Configure mock behavior
+//        when(mockClient.messages(any())).thenReturn(mockResponse);
+//
+//        // Use mock in your test
+//        CountDownLatch latch = new CountDownLatch(1);
+//        ClaudeContentGenerator generator = new ClaudeContentGenerator(latch, mockClient, 0);
+//
+//        String result = generator.call();
+//
+//        assertEquals("Mocked sentence response", result);
+//        verify(mockClient, times(1)).messages(any());
     }
 }

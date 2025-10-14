@@ -10,32 +10,17 @@ public class Definition {
     private Long id;
 
     @Lob
-    private String shortDefinition;
+    private String text;
 
-    @Lob
-    private String longDefinition;
-
-    @OneToOne(mappedBy = "definition")
+    @ManyToOne
+    @JoinColumn(name = "word_id", nullable = false)
     private Word word;
+
+    @Enumerated(EnumType.STRING)
+    private GeneratedContentStatus status;
 
     public Long getId() {
         return id;
-    }
-
-    public String getShortDefinition() {
-        return shortDefinition;
-    }
-
-    public void setShortDefinition(String shortDefinition) {
-        this.shortDefinition = shortDefinition;
-    }
-
-    public String getLongDefinition() {
-        return longDefinition;
-    }
-
-    public void setLongDefinition(String longDefinition) {
-        this.longDefinition = longDefinition;
     }
 
     public Word getWord() {
@@ -44,5 +29,21 @@ public class Definition {
 
     public void setWord(Word word) {
         this.word = word;
+    }
+
+    public String getText() {
+        return text;
+    }
+
+    public void setText(String text) {
+        this.text = text;
+    }
+
+    public GeneratedContentStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(GeneratedContentStatus status) {
+        this.status = status;
     }
 }

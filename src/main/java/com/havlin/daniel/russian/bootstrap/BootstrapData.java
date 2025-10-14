@@ -70,21 +70,7 @@ public class BootstrapData implements CommandLineRunner {
 
     }
 
-    private void createMockDefinition() {
-        // This is the prompt for short definition
-        //Write a short one sentence definition for the word собака in B1 level Russian. Put a ' after the letter of the word that needs to be stressed. Do not use the word собака and do not include a —.
 
-        // This is the prompt for long definition
-        //Write a multiple sentence definition for the word собака using B1 level Russian. Put a ' after the letter of the word that needs to be stressed. Do not use the word собака and do not include a —
-
-        String dogShortDefinition = "Э'то дома'шнее живо'тное, кото'рое о'чень лю'бит люде'й и мо'жет охраня'ть дом.";
-        String dogLongDefinition = "Э'то дома'шнее живо'тное, кото'рое живё'т с людьми'. Оно' о'чень ве'рное и у'мное. Мо'жет охраня'ть дом и игра'ть с детьми'. Лю'бит гуля'ть, бе'гать и есть специа'льную е'ду. Быва'ет ра'зных разме'ров и цвето'в. Мно'гие семьи' держа'т тако'го пито'мца дома'.";
-        //Word cobaka = wordRepository.findById(465L).get();
-        Definition definition = new Definition();
-        definition.setShortDefinition(dogShortDefinition);
-        definition.setLongDefinition(dogLongDefinition);
-
-    }
 
     private void createMockSentences() {
         String sentences = "Соба'ка лю'бит игра'ть в па'рке.\n" +

@@ -2,6 +2,7 @@ package com.havlin.daniel.russian.entities.dictionary;
 
 import com.havlin.daniel.russian.entities.generated_content.Definition;
 import com.havlin.daniel.russian.entities.generated_content.Sentence;
+import com.havlin.daniel.russian.entities.generated_content.WordInformation;
 import jakarta.persistence.*;
 
 import java.util.HashSet;
@@ -33,12 +34,15 @@ public class Word {
     @JoinColumn(name = "verb_id")
     private Verb verb;
 
+    @OneToOne(cascade = CascadeType.PERSIST)
+    @JoinColumn(name = "information_id")
+    private WordInformation wordInformation;
+
     @OneToMany(mappedBy = "word", fetch = FetchType.EAGER)
     private Set<WordForm> wordForms = new HashSet<>();
 
-    @OneToOne(cascade = CascadeType.PERSIST)
-    @JoinColumn(name = "definition_id")
-    private Definition definition;
+    @OneToMany(mappedBy = "word", fetch = FetchType.EAGER)
+    private Set<Definition> definitions = new HashSet<>();
 
     @OneToMany(mappedBy = "word", fetch = FetchType.EAGER)
     private Set<Sentence> sentences = new HashSet<>();
@@ -118,14 +122,25 @@ public class Word {
         return wordForms;
     }
 
-    public Definition getDefinition() {
-        return definition;
-    }
-    public void setDefinition(Definition definition) {
-        this.definition = definition;
+
+    public Set<Definition> getDefinitions() {
+        return definitions;
     }
 
     public Set<Sentence> getSentences() {
         return sentences;
+    }
+
+    public WordInformation getWordInformation() {
+        return wordInformation;
+    }
+
+    public void setWordInformation(WordInformation wordInformation) {
+        this.wordInformation = wordInformation;
+    }
+
+    @Override
+    public String toString() {
+        return getBare();
     }
 }

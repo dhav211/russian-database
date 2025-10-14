@@ -3,6 +3,9 @@ package com.havlin.daniel.russian.entities.dictionary;
 import jakarta.persistence.*;
 
 @Entity
+@Table(indexes = {
+        @Index(name = "idx_accented", columnList = "accented")
+})
 public class WordForm {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
