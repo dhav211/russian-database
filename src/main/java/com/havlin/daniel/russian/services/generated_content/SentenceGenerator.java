@@ -82,6 +82,7 @@ public class SentenceGenerator {
                 List<GeneratedContentErrorMessage> errors = new ArrayList<>();
                 Sentence currentSentence = new Sentence();
                 currentSentence.setWord(word);
+                word.getSentences().add(currentSentence);
 
                 currentSentence.setText(sentenceSet.russianText);
                 currentSentence.setEnglishTranslation(sentenceSet.englishText);
@@ -105,6 +106,7 @@ public class SentenceGenerator {
                 sentenceSet.russianText = correctedContent.correctedText();
 
                 if (!errors.isEmpty())
+                    // TODO add the errors to the database here
                     currentSentence.setStatus(GeneratedContentStatus.NEEDS_APPROVAL);
                 else
                     currentSentence.setStatus(GeneratedContentStatus.APPROVED);

@@ -41,7 +41,7 @@ public class GenerateContentController {
 
             if (!words.isEmpty()) {
                 for (Word word : words) {
-                    generatedContentService.generateContentForWord(word, AiModel.CLAUDE);
+                    generatedContentService.generateContentForWord(word, AiModel.GEMINI);
                 }
             }
         } catch (Exception e) {

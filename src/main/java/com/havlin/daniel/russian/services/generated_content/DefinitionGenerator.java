@@ -47,6 +47,7 @@ public class DefinitionGenerator {
 
             // If any errors are found we need to correct them by hand before the user can see them.
             if (!errors.isEmpty())
+                // TODO add errors to db
                 definition.setStatus(GeneratedContentStatus.NEEDS_APPROVAL);
             else
                 definition.setStatus(GeneratedContentStatus.APPROVED);
@@ -86,6 +87,7 @@ public class DefinitionGenerator {
         if (errors.isEmpty()) {
             wordInformation.setStatus(GeneratedContentStatus.APPROVED);
         } else {
+            // TODO add erros to db
             wordInformation.setStatus(GeneratedContentStatus.CREATION_CONCERNS);
         }
 

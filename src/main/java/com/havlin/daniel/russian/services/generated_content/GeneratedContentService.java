@@ -9,6 +9,7 @@ import com.havlin.daniel.russian.entities.generated_content.ReadingLevel;
 import com.havlin.daniel.russian.entities.generated_content.Sentence;
 import com.havlin.daniel.russian.entities.generated_content.WordInformation;
 import com.havlin.daniel.russian.repositories.dictionary.WordFormRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -37,6 +38,7 @@ public class GeneratedContentService {
         this.definitionGenerator = new DefinitionGenerator(wordFormRepository);
     }
 
+    @Transactional
     public void generateContentForWord(Word word, AiModel aiModel) {
         int numberOfThreads = 8;
 
@@ -68,17 +70,23 @@ public class GeneratedContentService {
             // We are keeping the sentence futures in a map so we can keep track of the reading level
             Map<ReadingLevel, Future<String>> uneditedGeneratedSentenceFutures = new HashMap<>();
             for (ReadingLevel readingLevel : ReadingLevel.values()) {
-                ClaudeContentGenerator sentenceGenerator = new ClaudeContentGenerator(claudeKey, latch,
-                        promptGenerator.buildPromptForSentenceGeneration(word, readingLevel));
+                LLMContentGenerator sentenceGenerator = aiModel == AiModel.CLAUDE ?
+                        new ClaudeContentGenerator(claudeKey, latch, promptGenerator.buildPromptForSentenceGeneration(word, readingLevel)) :
+                        new GeminiContentGenerator(geminiKey, latch, promptGenerator.buildPromptForSentenceGeneration(word, readingLevel));
                 uneditedGeneratedSentenceFutures.put(readingLevel, executor.submit(sentenceGenerator));
             }
 
             // Once all threads have completed the countdown latch will complete and let the main thread move forward
             latch.await();
 
+            List<Sentence> sentences = new ArrayList<>();
+
             for (Map.Entry<ReadingLevel, Future<String>> entry : uneditedGeneratedSentenceFutures.entrySet()) {
-                sentenceGenerator.createSentenceListFromGeneratedSentences(entry.getValue().get(), word, entry.getKey())
-                        .forEach((sentence -> word.getSentences().add(sentence)));
+                sentences.addAll(sentenceGenerator.createSentenceListFromGeneratedSentences(entry.getValue().get(), word, entry.getKey()));
+            }
+
+            for (Sentence sentence : sentences) {
+                // save to the sentence repo
             }
 
             // TODO make sure at least 1 of the definitions passed corrections. If not, redo it
@@ -90,6 +98,9 @@ public class GeneratedContentService {
                             wordInformationFutureHolder.usageContext.get(),
                             wordInformationFutureHolder.formation.get(),
                             word);
+
+
+            System.out.println("MADE IT!");
 
             // save the sentences, definitions, word information, and the word to the database
         } catch (InterruptedException | ExecutionException e) {
