@@ -62,9 +62,8 @@ public class SentenceGenerator {
         }
 
         // Get all forms of the word from the DB so we can figure out where or even if the word was used in the sentence
-        List<String> forms = wordFormRepository.getAllByWordId(word.getId())
+        List<String> formsInUppercase = word.getWordForms()
                 .stream()
-                .filter((wordForm -> wordForm.getAccented() != null))
                 .map((wordForm -> wordForm.getAccented().toUpperCase()))
                 .toList();
 
@@ -74,7 +73,7 @@ public class SentenceGenerator {
             Set<String> splitSentence = Arrays.stream(sentenceSet.russianText
                     .toUpperCase().replaceAll("[.!,]", "").split(" ")).collect(Collectors.toSet());
             // there should only ever be one or no values, this is still a list to avoid any sort of out of bounds errors
-            List<String> containingWordForm = forms.stream()
+            List<String> containingWordForm = formsInUppercase.stream()
                     .filter(splitSentence::contains)
                     .toList();
 

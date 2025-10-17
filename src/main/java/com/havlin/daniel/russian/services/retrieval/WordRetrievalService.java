@@ -41,6 +41,10 @@ public class WordRetrievalService {
         return sortWordsFromWordFormsById(matchingWordsForms);
     }
 
+    public Optional<Word> getWordByAccentedTextForSentenceCreation(String accentedText) {
+        return wordRepository.findWordByAccentedForContentCreation(accentedText);
+    }
+
     private Set<Word> sortWordsFromWordFormsById(List<WordForm> wordForms) {
         Set<Word> words = new TreeSet<>(Comparator.comparing(Word::getId));
 

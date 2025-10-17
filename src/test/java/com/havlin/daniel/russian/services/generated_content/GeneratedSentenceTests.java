@@ -152,7 +152,7 @@ public class GeneratedSentenceTests {
                 "Stay with us for the weekend.\n" +
                 "Imperative Singular";
 
-        Word word = wordRepository.findById(170L).get();
+        Word word = wordRepository.findWordByIdWithSentencesAndWordForms(170L).get();
 
         List<Sentence> createdSentences = sentenceGenerator.createSentenceListFromGeneratedSentences(successfulSentences, word, ReadingLevel.BEGINNER);
         List<Sentence> createdSentencesWithUnsuccessful = sentenceGenerator.createSentenceListFromGeneratedSentences(unsuccessfulSentences, word, ReadingLevel.BEGINNER);
@@ -212,7 +212,7 @@ public class GeneratedSentenceTests {
                 "Земля' враща'ется вокру'г свое'й о'си.\n" +
                 "Earth rotates around its axis.\n" +
                 "Nominative";
-            Word word1 = wordRepository.findById(153L).get();
+            Word word1 = wordRepository.findWordByIdWithSentencesAndWordForms(153L).get();
             List<Sentence> createdSentences1 = sentenceGenerator.createSentenceListFromGeneratedSentences(nounSentences1, word1, ReadingLevel.INTERMEDIATE);
 
             String nounSentences2 = "В э'тих ко'мнатах жи'ли студе'нты университе'та.\n" +
@@ -255,7 +255,7 @@ public class GeneratedSentenceTests {
                     "The guest room is always ready for visitors.\n" +
                     "Nominative";
 
-            Word word2 = wordRepository.findById(230L).get();
+            Word word2 = wordRepository.findWordByIdWithSentencesAndWordForms(230L).get();
             List<Sentence> createdSentences2 = sentenceGenerator.createSentenceListFromGeneratedSentences(nounSentences2, word2, ReadingLevel.BEGINNER);
 
         String nounSentences3 = "В э'тих у'трах всегда' слы'шно пе'ние птиц.\n" +
@@ -310,7 +310,7 @@ public class GeneratedSentenceTests {
                     "Morning begins with the first rays of sun.\n" +
                     "Nominative";
 
-            Word word3 = wordRepository.findById(231L).get();
+            Word word3 = wordRepository.findWordByIdWithSentencesAndWordForms(231L).get();
             List<Sentence> createdSentences3 = sentenceGenerator.createSentenceListFromGeneratedSentences(nounSentences3, word3, ReadingLevel.INTERMEDIATE);
 
 
@@ -351,7 +351,7 @@ public class GeneratedSentenceTests {
                     "The human shoulder is capable of performing complex rotational movements.\n" +
                     "Nominative";
 
-            Word word4 = wordRepository.findById(237L).get();
+            Word word4 = wordRepository.findWordByIdWithSentencesAndWordForms(237L).get();
             List<Sentence> createdSentences4 = sentenceGenerator.createSentenceListFromGeneratedSentences(nounSentences4, word4, ReadingLevel.ADVANCED);
 
             String nounSentences5 = "Пр'и изуче'нии иностр'анных язы'ков мы' часто' занима'емся в ко'мнатах с совреме'нным обор'удованием.\n" +
@@ -450,7 +450,7 @@ public class GeneratedSentenceTests {
                     "The room greeted us with unusual light.\n" +
                     "Nominative";
 
-        Word word5 = wordRepository.findById(230L).get();
+        Word word5 = wordRepository.findWordByIdWithSentencesAndWordForms(230L).get();
         List<Sentence> createdSentences5 = sentenceGenerator.createSentenceListFromGeneratedSentences(nounSentences5, word5, ReadingLevel.ADVANCED);
 
 

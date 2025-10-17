@@ -23,9 +23,6 @@ public class Word {
     @Enumerated(EnumType.STRING)
     private WordLevel wordLevel;
 
-    @OneToMany(mappedBy = "word", fetch = FetchType.EAGER)
-    private Set<Translation> translations;
-
     @OneToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "noun_id")
     private Noun noun;
@@ -38,14 +35,17 @@ public class Word {
     @JoinColumn(name = "information_id")
     private WordInformation wordInformation;
 
-    @OneToMany(mappedBy = "word", fetch = FetchType.EAGER)
-    private Set<WordForm> wordForms = new HashSet<>();
+    @OneToMany(mappedBy = "word", fetch = FetchType.LAZY)
+    private final Set<Translation> translations = new HashSet<>();
 
-    @OneToMany(mappedBy = "word", fetch = FetchType.EAGER)
-    private Set<Definition> definitions = new HashSet<>();
+    @OneToMany(mappedBy = "word", fetch = FetchType.LAZY)
+    private final Set<WordForm> wordForms = new HashSet<>();
 
-    @OneToMany(mappedBy = "word", fetch = FetchType.EAGER)
-    private Set<Sentence> sentences = new HashSet<>();
+    @OneToMany(mappedBy = "word", fetch = FetchType.LAZY)
+    private final Set<Definition> definitions = new HashSet<>();
+
+    @OneToMany(mappedBy = "word", fetch = FetchType.LAZY)
+    private final Set<Sentence> sentences = new HashSet<>();
 
     public static Word getError(String message) {
         Word error = new Word();

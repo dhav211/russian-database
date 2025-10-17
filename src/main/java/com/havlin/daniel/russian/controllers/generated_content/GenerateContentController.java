@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 @RestController
@@ -37,15 +38,17 @@ public class GenerateContentController {
     @PostMapping(value = "/addAll/{accentedWord}")
     public void addAllInitialContentForWord(@PathVariable("accentedWord") String accentedWord) {
         try {
-            Set<Word> words = wordRetrievalService.getWordsFromAccentedText(accentedWord);
+            Optional<Word> retrievedWord = wordRetrievalService.getWordByAccentedTextForSentenceCreation(accentedWord);
 
-            if (!words.isEmpty()) {
-                for (Word word : words) {
+            if (retrievedWord.isPresent()) {
+                Word word = retrievedWord.get();
+                
+                if (word.getSentences().isEmpty()) {
                     generatedContentService.generateContentForWord(word, AiModel.GEMINI);
                 }
             }
         } catch (Exception e) {
-            // return an empty object
+            System.out.println(e.getMessage());
         }
 
     }
