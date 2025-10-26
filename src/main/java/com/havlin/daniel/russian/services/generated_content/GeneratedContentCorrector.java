@@ -1,7 +1,5 @@
 package com.havlin.daniel.russian.services.generated_content;
 
-import com.havlin.daniel.russian.entities.dictionary.Word;
-import com.havlin.daniel.russian.entities.dictionary.WordForm;
 import com.havlin.daniel.russian.repositories.dictionary.WordFormRepository;
 import com.havlin.daniel.russian.utils.GeneratedContentChecker;
 import com.havlin.daniel.russian.utils.StressedWordConverter;
@@ -29,13 +27,13 @@ class GeneratedContentCorrector {
     /**
      * Correct issues that are common with all generated content (sentence, definition, etc.). If the content cannot be corrected
      * we can log the error with a simple message that will aid in human intervention of the content.
-     * @param errors There are errors that have already been logged that should be passed in here, we will add to the list in this method.
      * @param text The russian text that will be corrected.
      * @return CorrectContent is a simple class that contains the list of errors and the correct text.
      */
-    public CorrectedContent correctTextIssuesAndLogErrors(List<GeneratedContentErrorMessage> errors, String text) {
-        if (GeneratedContentChecker.doesSentenceContainLettersWithStressMarks(text)) {
-            List<String> stressedWords = findWordsWithStressedLetter(text);
+    public CorrectedContent correctTextIssuesAndLogErrors(String text) {
+        List<GeneratedContentErrorMessage> errors = new ArrayList<>();
+        if (GeneratedContentChecker.doesSentenceContainLettersWithBuiltinStressMarks(text)) {
+            List<String> stressedWords = findWordsWithBuiltinStressedLetter(text);
             text = replaceStressedLetters(text);
 
             stressedWords.forEach((stressedWord) -> {
@@ -285,7 +283,7 @@ class GeneratedContentCorrector {
      * @param text The text that contains a word with a stress mark.
      * @return List of all words that have a builtin stress mark.
      */
-    private List<String> findWordsWithStressedLetter(String text) {
+    private List<String> findWordsWithBuiltinStressedLetter(String text) {
         return Arrays.stream(splitWordsAndRemovePunc(text))
                 .filter((word) -> {
                     Matcher matcher = cyrllicStressPattern.matcher(word);

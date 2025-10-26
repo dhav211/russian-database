@@ -2,24 +2,22 @@ package com.havlin.daniel.russian.services.generated_content;
 
 import com.havlin.daniel.russian.entities.dictionary.Word;
 import com.havlin.daniel.russian.entities.generated_content.Definition;
+import com.havlin.daniel.russian.entities.generated_content.GeneratedContentError;
 import com.havlin.daniel.russian.entities.generated_content.GeneratedContentStatus;
 import com.havlin.daniel.russian.entities.generated_content.WordInformation;
 import com.havlin.daniel.russian.repositories.dictionary.WordFormRepository;
-import com.havlin.daniel.russian.repositories.dictionary.WordRepository;
-import com.havlin.daniel.russian.repositories.generated_content.DefinitionRepository;
-import com.havlin.daniel.russian.repositories.generated_content.WordInformationRepository;
 import com.havlin.daniel.russian.utils.GeneratedContentChecker;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.stream.IntStream;
 
 public class DefinitionGenerator {
     private final GeneratedContentCorrector generatedContentCorrector;
+    private final GeneratedContentErrorService generatedContentErrorService;
 
-    public DefinitionGenerator(WordFormRepository wordFormRepository) {
+    public DefinitionGenerator(WordFormRepository wordFormRepository, GeneratedContentErrorService generatedContentErrorService) {
         this.generatedContentCorrector = new GeneratedContentCorrector(wordFormRepository);
+        this.generatedContentErrorService = generatedContentErrorService;
     }
 
     /**
@@ -28,31 +26,41 @@ public class DefinitionGenerator {
      * to be saved to the repository.
      * @param definitionText A set of one-sentence definitions created by an LLM, will be converted to definition objects.
      * @param word The word that the definitions are trying to describe.
-     * @return A list of definition objects that have been corrected and ready to be saved to the database.
+     * @return A list of definition objects that have been corrected but still may contain errors, the list of errors are
+     * included with the returning object
      */
-    public List<Definition> createShortDefinitions(String definitionText, Word word) {
+    List<GeneratedContentService.DefinitionWithErrors> createShortDefinitions(String definitionText, Word word) {
         return definitionText.lines()
                 // remove any lines that have too many latin letters or empty lines
                 .filter((line) -> !GeneratedContentChecker.isOverLatinLetterThreshold(line, 0.5) && !line.isEmpty())
                 .map((line) -> {
             Definition definition = new Definition();
-            List<GeneratedContentErrorMessage> errors = new ArrayList<>();
+            List<GeneratedContentErrorMessage> errorMessages = new ArrayList<>();
             GeneratedContentCorrector.CorrectedContent correctedContent = generatedContentCorrector
-                    .correctTextIssuesAndLogErrors(errors, line);
-            errors.addAll(correctedContent.errors());
+                    .correctTextIssuesAndLogErrors(line);
+            errorMessages.addAll(correctedContent.errors());
 
             definition.setText(correctedContent.correctedText());
             definition.setWord(word);
             word.getDefinitions().add(definition);
 
-            // If any errors are found we need to correct them by hand before the user can see them.
-            if (!errors.isEmpty())
-                // TODO add errors to db
+            // Convert the error messages to Error entities which will be later saved to the database
+            // We cannot save them now, as we need the sentence ID which won't exist until the db is flushed
+            List<GeneratedContentError> errors = errorMessages.stream()
+                    .map((message) -> generatedContentErrorService.createError(
+                            GeneratedContentErrorOrigin.DEFINITION,
+                            message.errorType(),
+                            message.message(),
+                            definition.getText()
+                    )).toList();
+
+            // If any errorMessages are found we need to correct them by hand before the user can see them.
+            if (!errorMessages.isEmpty())
                 definition.setStatus(GeneratedContentStatus.NEEDS_APPROVAL);
             else
                 definition.setStatus(GeneratedContentStatus.APPROVED);
 
-            return definition;
+            return new GeneratedContentService.DefinitionWithErrors(definition, errors);
         }).toList();
     }
 
@@ -66,13 +74,10 @@ public class DefinitionGenerator {
         wordInformation.setWord(word);
         word.setWordInformation(wordInformation);
 
-        List<GeneratedContentErrorMessage> errors = new ArrayList<>();
-
         String[] informationFields = { definition, etymology, usageContext, formation };
         for (int i = 0; i < informationFields.length; i ++) {
             GeneratedContentCorrector.CorrectedContent corrections = generatedContentCorrector
-                    .correctTextIssuesAndLogErrors(errors, informationFields[i]);
-            errors.addAll(corrections.errors());
+                    .correctTextIssuesAndLogErrors(informationFields[i]);
 
             switch (i) {
                 case 0 -> wordInformation.setDefinition(corrections.correctedText());
@@ -80,15 +85,6 @@ public class DefinitionGenerator {
                 case 2 -> wordInformation.setUsageContext(corrections.correctedText());
                 case 3 -> wordInformation.setFormation(corrections.correctedText());
             }
-        }
-
-        // Regardless of errors, we will save it to the database. However, if there are concerns we can check on them
-        // and try and correct them by hand.
-        if (errors.isEmpty()) {
-            wordInformation.setStatus(GeneratedContentStatus.APPROVED);
-        } else {
-            // TODO add erros to db
-            wordInformation.setStatus(GeneratedContentStatus.CREATION_CONCERNS);
         }
 
         return wordInformation;

@@ -1,22 +1,19 @@
 package com.havlin.daniel.russian.services.generated_content;
 
-import com.anthropic.client.AnthropicClient;
-import com.anthropic.client.okhttp.AnthropicOkHttpClient;
 import com.havlin.daniel.russian.entities.dictionary.Word;
-import com.havlin.daniel.russian.entities.dictionary.WordForm;
-import com.havlin.daniel.russian.entities.generated_content.Definition;
-import com.havlin.daniel.russian.entities.generated_content.ReadingLevel;
-import com.havlin.daniel.russian.entities.generated_content.Sentence;
-import com.havlin.daniel.russian.entities.generated_content.WordInformation;
+import com.havlin.daniel.russian.entities.generated_content.*;
 import com.havlin.daniel.russian.repositories.dictionary.WordFormRepository;
+import com.havlin.daniel.russian.repositories.dictionary.WordRepository;
+import com.havlin.daniel.russian.repositories.generated_content.DefinitionRepository;
+import com.havlin.daniel.russian.repositories.generated_content.GeneratedContentErrorRepository;
+import com.havlin.daniel.russian.repositories.generated_content.SentenceRepository;
+import com.havlin.daniel.russian.repositories.generated_content.WordInformationRepository;
+import com.havlin.daniel.russian.services.dictionary.WordService;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.*;
 
 
@@ -31,18 +28,37 @@ public class GeneratedContentService {
     private final PromptGenerator promptGenerator;
     private final SentenceGenerator sentenceGenerator;
     private final DefinitionGenerator definitionGenerator;
+    private final WordService wordService;
+    private final GeneratedContentErrorService generatedContentErrorService;
 
-    public GeneratedContentService(WordFormRepository wordFormRepository) {
+    public GeneratedContentService(WordFormRepository wordFormRepository,
+                                   GeneratedContentErrorService generatedContentErrorService,
+                                   WordService wordService
+                                   ) {
         this.promptGenerator = new PromptGenerator(wordFormRepository);
-        this.sentenceGenerator = new SentenceGenerator(wordFormRepository);
-        this.definitionGenerator = new DefinitionGenerator(wordFormRepository);
+        this.generatedContentErrorService = generatedContentErrorService;
+        this.sentenceGenerator = new SentenceGenerator(wordFormRepository, generatedContentErrorService);
+        this.definitionGenerator = new DefinitionGenerator(wordFormRepository, generatedContentErrorService);
+        this.wordService = wordService;
     }
 
-    @Transactional
     public void generateContentForWord(Word word, AiModel aiModel) {
+        GeneratedContentDTO generatedContentDTO = getGeneratedContent(word, aiModel);
+        CorrectedContentWithErrorsDTO correctedContentWithErrorsDTO = createCorrectedContentEntities(generatedContentDTO, word);
+        wordService.saveGeneratedContentToWord(
+                correctedContentWithErrorsDTO.sentenceWithErrors.stream().map((s) -> s.sentence).toList(),
+                correctedContentWithErrorsDTO.definitionWithErrors.stream().map((d) -> d.definition).toList(),
+                correctedContentWithErrorsDTO.wordInformation,
+                word);
+        generatedContentErrorService.addErrors(correctedContentWithErrorsDTO.sentenceWithErrors, correctedContentWithErrorsDTO.definitionWithErrors);
+    }
+
+    private GeneratedContentDTO getGeneratedContent(Word word, AiModel aiModel) {
         int numberOfThreads = 8;
+        GeneratedContentDTO generatedContentDTO = new GeneratedContentDTO();
 
         try(ExecutorService executor = Executors.newFixedThreadPool(numberOfThreads)) {
+
             // Once this countdown reaches zero we know all the threads have completed and we can move forward
             // with parsing the responses
             CountDownLatch latch = new CountDownLatch(numberOfThreads);
@@ -51,7 +67,7 @@ public class GeneratedContentService {
             LLMContentGenerator shortDefinitionGenerator = aiModel == AiModel.CLAUDE ?
                     new ClaudeContentGenerator(claudeKey, latch, promptGenerator.getShortDefinitionPrompt(word)) :
                     new GeminiContentGenerator("NEEDSKEY", latch, promptGenerator.getShortDefinitionPrompt(word));
-            Future<String> shortDefinitionFuture = executor.submit(shortDefinitionGenerator);
+            Future<String> definitionFuture = executor.submit(shortDefinitionGenerator);
 
             String[] wordInformationPrompts = promptGenerator.getWordInformationPrompts(word);
             WordInformationFutureHolder wordInformationFutureHolder = new WordInformationFutureHolder();
@@ -79,45 +95,96 @@ public class GeneratedContentService {
             // Once all threads have completed the countdown latch will complete and let the main thread move forward
             latch.await();
 
-            List<Sentence> sentences = new ArrayList<>();
-
+            // Get all the generated data out of the futures and into a DTO which can be passed along for turning
+            // into actual entities
             for (Map.Entry<ReadingLevel, Future<String>> entry : uneditedGeneratedSentenceFutures.entrySet()) {
-                sentences.addAll(sentenceGenerator.createSentenceListFromGeneratedSentences(entry.getValue().get(), word, entry.getKey()));
+                generatedContentDTO.sentences.put(entry.getKey(), entry.getValue().get());
             }
 
-            for (Sentence sentence : sentences) {
-                // save to the sentence repo
-            }
+            generatedContentDTO.definitions = definitionFuture.get();
 
-            // TODO make sure at least 1 of the definitions passed corrections. If not, redo it
-            List<Definition> definitions = definitionGenerator.createShortDefinitions(shortDefinitionFuture.get(), word);
-            WordInformation wordInformation = definitionGenerator
-                    .createWordInformation(
-                            wordInformationFutureHolder.definition.get(),
-                            wordInformationFutureHolder.etymology.get(),
-                            wordInformationFutureHolder.usageContext.get(),
-                            wordInformationFutureHolder.formation.get(),
-                            word);
-
-
-            System.out.println("MADE IT!");
-
-            // save the sentences, definitions, word information, and the word to the database
-        } catch (InterruptedException | ExecutionException e) {
+            generatedContentDTO.wordInformation.definition = wordInformationFutureHolder.definition.get();
+            generatedContentDTO.wordInformation.etymology = wordInformationFutureHolder.etymology.get();
+            generatedContentDTO.wordInformation.formation = wordInformationFutureHolder.formation.get();
+            generatedContentDTO.wordInformation.usageContext = wordInformationFutureHolder.usageContext.get();
+        } catch (InterruptedException | ExecutionException | NullPointerException e) {
             e.printStackTrace();
+            return generatedContentDTO.ERRORS();
         }
+
+        return generatedContentDTO;
     }
 
-    static class SentenceSet {
+    CorrectedContentWithErrorsDTO createCorrectedContentEntities(GeneratedContentDTO generatedContentDTO, Word word) {
+        List<SentenceWithErrors> sentences = new ArrayList<>();
+
+        for (Map.Entry<ReadingLevel, String> entry : generatedContentDTO.sentences.entrySet()) {
+            sentences.addAll(sentenceGenerator.createSentenceListFromGeneratedSentences(entry.getValue(), word, entry.getKey()));
+        }
+
+        List<DefinitionWithErrors> definitions = definitionGenerator.createShortDefinitions(generatedContentDTO.definitions, word);
+        WordInformation wordInformation = definitionGenerator
+                .createWordInformation(
+                        generatedContentDTO.wordInformation.definition,
+                        generatedContentDTO.wordInformation.etymology,
+                        generatedContentDTO.wordInformation.usageContext,
+                        generatedContentDTO.wordInformation.formation,
+                        word);
+
+        return new CorrectedContentWithErrorsDTO(sentences, definitions, wordInformation);
+    }
+
+    static class GeneratedSentenceDTO {
         String russianText;
         String englishText;
         String grammarForm;
     }
 
-    static class WordInformationFutureHolder {
+    static class CorrectedContentWithErrorsDTO {
+        public CorrectedContentWithErrorsDTO(List<SentenceWithErrors> sentenceWithErrors,
+                                             List<DefinitionWithErrors> definitionWithErrors,
+                                             WordInformation wordInformation) {
+            this.sentenceWithErrors = sentenceWithErrors;
+            this.definitionWithErrors = definitionWithErrors;
+            this.wordInformation = wordInformation;
+        }
+
+        List<SentenceWithErrors> sentenceWithErrors;
+        List<DefinitionWithErrors> definitionWithErrors;
+        WordInformation wordInformation;
+    }
+
+    private static class WordInformationFutureHolder {
         Future<String> definition;
         Future<String> etymology;
         Future<String> usageContext;
         Future<String> formation;
+    }
+
+    static class WordInformationDTO {
+        String definition;
+        String etymology;
+        String usageContext;
+        String formation;
+    }
+
+    static class SentenceWithErrors {
+        SentenceWithErrors(Sentence sentence, List<GeneratedContentError> errors) {
+            this.sentence = sentence;
+            this.errors = errors;
+        }
+
+        Sentence sentence;
+        List<GeneratedContentError> errors;
+    }
+
+    static class DefinitionWithErrors {
+        DefinitionWithErrors(Definition definition, List<GeneratedContentError> errors) {
+            this.definition = definition;
+            this.errors = errors;
+        }
+
+        Definition definition;
+        List<GeneratedContentError> errors;
     }
 }

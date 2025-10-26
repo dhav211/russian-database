@@ -21,15 +21,16 @@ public class GeneratedDefinitionTests {
     @Autowired
     private WordFormRepository wordFormRepository;
 
+    @Autowired
+    private GeneratedContentErrorService generatedContentErrorService;
+
     @Test
     @Transactional
     public void createDefinitionsForWord() {
-        DefinitionGenerator definitionGenerator = new DefinitionGenerator(wordFormRepository);
+        DefinitionGenerator definitionGenerator = new DefinitionGenerator(wordFormRepository, generatedContentErrorService);
         PromptGenerator promptGenerator = new PromptGenerator(wordFormRepository);
         Word word = wordRepository.findById(179L).get();
         Word room = wordRepository.findById(230L).get();
-
-        String longDefPrompt = promptGenerator.getLongDefinitionPrompt(word);
 
         String shortDefinition = "Выполня'ть де'йствия и́ли зада'ния, что'бы получи'ть результа'т и́ли де'ньги.\n" +
                 "Занима'ться каки'м-то де'лом и́ли испо́льзовать свои́ уме'ния для по'льзы.\n" +
@@ -62,10 +63,10 @@ public class GeneratedDefinitionTests {
                 "\n" +
                 "Морфологи'чески состоит из корня «ком-» и суффикса «-ната». Существительное' женского' рода с типичной для русского' языка структу'рой словообразова'ния.";
 
-        List<Definition> definitions = definitionGenerator.createShortDefinitions(shortDefinition, word);
+        List<GeneratedContentService.DefinitionWithErrors> definitions = definitionGenerator.createShortDefinitions(shortDefinition, word);
         //WordInformation info = definitionGenerator.createWordInformation(wordInformation, word);
         //WordInformation roomInfo = definitionGenerator.createWordInformation(wordInformationForRoom, room);
-        List<Definition> roomDefinitions = definitionGenerator.createShortDefinitions(shortDefinition, room);
+        List<GeneratedContentService.DefinitionWithErrors> roomDefinitions = definitionGenerator.createShortDefinitions(shortDefinition, room);
 
         Assertions.assertAll(
                 () -> Assertions.assertEquals(3, definitions.size()),

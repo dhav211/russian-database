@@ -1,23 +1,22 @@
 package com.havlin.daniel.russian.services.generated_content;
 
 import com.havlin.daniel.russian.entities.dictionary.Word;
-import com.havlin.daniel.russian.entities.generated_content.GeneratedSentenceGrammarForm;
-import com.havlin.daniel.russian.entities.generated_content.ReadingLevel;
-import com.havlin.daniel.russian.entities.generated_content.Sentence;
-import com.havlin.daniel.russian.entities.generated_content.GeneratedContentStatus;
+import com.havlin.daniel.russian.entities.generated_content.*;
 import com.havlin.daniel.russian.repositories.dictionary.WordFormRepository;
 import com.havlin.daniel.russian.utils.GeneratedContentChecker;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class SentenceGenerator {
+class SentenceGenerator {
     private final WordFormRepository wordFormRepository;
     private final GeneratedContentCorrector generatedContentCorrector;
+    private final GeneratedContentErrorService generatedContentErrorService;
 
-    public SentenceGenerator(WordFormRepository wordFormRepository) {
+    public SentenceGenerator(WordFormRepository wordFormRepository, GeneratedContentErrorService generatedContentErrorService) {
         this.wordFormRepository = wordFormRepository;
         this.generatedContentCorrector = new GeneratedContentCorrector(wordFormRepository);
+        this.generatedContentErrorService = generatedContentErrorService;
     }
 
     /**
@@ -25,13 +24,15 @@ public class SentenceGenerator {
      * @param generatedSentences A long string from the LLM that must be ordered in a very particular fashion, or it will produce errors.
      * @param word The word which will be linked to the sentence in the database, should be the word used to generate the sentences
      * @param readingLevel The reading level which was used when generating the sentences
-     * @return All sentences which have been mostly proven to be error free
+     * @return All sentences along with their possible errors
      */
-    public List<Sentence> createSentenceListFromGeneratedSentences(String generatedSentences, Word word, ReadingLevel readingLevel) {
+     List<GeneratedContentService.SentenceWithErrors> createSentenceListFromGeneratedSentences(String generatedSentences,
+                                                                                               Word word,
+                                                                                               ReadingLevel readingLevel) {
         // This will be the final result of separating the string value given by claude, this function will return this and will be saved later to the DB
-        List<Sentence> sentences = new ArrayList<>();
+        List<GeneratedContentService.SentenceWithErrors> sentences = new ArrayList<>();
         // A list of simple POJOs to make reading the separated string easier
-        List<GeneratedContentService.SentenceSet> sentenceSets = new ArrayList<>();
+        List<GeneratedContentService.GeneratedSentenceDTO> sentenceSets = new ArrayList<>();
         int sentenceIndex = -1; // starts at -1 because for iteration of the loop increases by 1, so it will be at 0
 
         // We can't just convert the split lines into a String list because it will be immutable
@@ -52,7 +53,7 @@ public class SentenceGenerator {
         for (int i = 0; i < split.size(); i++) {
             if (i % 3 == 0) {
                 sentenceIndex++;
-                sentenceSets.add(new GeneratedContentService.SentenceSet());
+                sentenceSets.add(new GeneratedContentService.GeneratedSentenceDTO());
                 sentenceSets.get(sentenceIndex).russianText = split.get(i);
             } else if (i % 3 == 1) {
                 sentenceSets.get(sentenceIndex).englishText = split.get(i);
@@ -67,7 +68,7 @@ public class SentenceGenerator {
                 .map((wordForm -> wordForm.getAccented().toUpperCase()))
                 .toList();
 
-        for (GeneratedContentService.SentenceSet sentenceSet: sentenceSets) {
+        for (GeneratedContentService.GeneratedSentenceDTO sentenceSet: sentenceSets) {
             // Here we want to figure out which word form is used in the sentence
             // Split the sentence into a
             Set<String> splitSentence = Arrays.stream(sentenceSet.russianText
@@ -78,7 +79,7 @@ public class SentenceGenerator {
                     .toList();
 
             if (!containingWordForm.isEmpty()) { // if the list is empty that means we couldn't find the word form in the sentence
-                List<GeneratedContentErrorMessage> errors = new ArrayList<>();
+                List<GeneratedContentErrorMessage> errorMessages = new ArrayList<>();
                 Sentence currentSentence = new Sentence();
                 currentSentence.setWord(word);
                 word.getSentences().add(currentSentence);
@@ -89,28 +90,37 @@ public class SentenceGenerator {
                 currentSentence.setGrammarFormFromString(sentenceSet.grammarForm);
 
                 if (currentSentence.getGrammarForm() == GeneratedSentenceGrammarForm.ERROR)
-                    errors.add(new GeneratedContentErrorMessage(GeneratedContentErrorType.MISSING_GRAMMAR_FORM,
+                    errorMessages.add(new GeneratedContentErrorMessage(GeneratedContentErrorType.MISSING_GRAMMAR_FORM,
                             word + " is missing it's grammar form"));
 
                 currentSentence.setWordPosition(sentenceSet.russianText, containingWordForm.getFirst());
                 if (currentSentence.getWordPosition() == -1) { // negative number means wordForm was not found in sentence
-                    errors.add(new GeneratedContentErrorMessage(GeneratedContentErrorType.WORD_FORM_NOT_IN_SENTENCE,
+                    errorMessages.add(new GeneratedContentErrorMessage(GeneratedContentErrorType.WORD_FORM_NOT_IN_SENTENCE,
                             "The word form " + containingWordForm.getFirst() + " was not found"));
                 }
 
                 GeneratedContentCorrector.CorrectedContent correctedContent = generatedContentCorrector
-                        .correctTextIssuesAndLogErrors(errors, sentenceSet.russianText);
+                        .correctTextIssuesAndLogErrors(sentenceSet.russianText);
 
-                errors.addAll(correctedContent.errors());
+                errorMessages.addAll(correctedContent.errors());
                 sentenceSet.russianText = correctedContent.correctedText();
 
-                if (!errors.isEmpty())
-                    // TODO add the errors to the database here
+                // Convert the error messages to Error entities which will be later saved to the database
+                // We cannot save them now, as we need the sentence ID which won't exist until the db is flushed
+                List<GeneratedContentError> errors = errorMessages.stream()
+                        .map((message) -> generatedContentErrorService.createError(
+                                GeneratedContentErrorOrigin.SENTENCE,
+                                message.errorType(),
+                                message.message(),
+                                currentSentence.getText()
+                        )).toList();
+
+                if (!errorMessages.isEmpty())
                     currentSentence.setStatus(GeneratedContentStatus.NEEDS_APPROVAL);
                 else
                     currentSentence.setStatus(GeneratedContentStatus.APPROVED);
 
-                sentences.add(currentSentence);
+                sentences.add(new GeneratedContentService.SentenceWithErrors(currentSentence, errors));
             }
         }
 

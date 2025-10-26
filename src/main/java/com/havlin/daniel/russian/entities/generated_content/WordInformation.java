@@ -21,9 +21,6 @@ public class WordInformation {
     @Lob
     private String formation;
 
-    @Enumerated(EnumType.STRING)
-    private GeneratedContentStatus status;
-
     @OneToOne(mappedBy = "wordInformation")
     private Word word;
 
@@ -69,13 +66,5 @@ public class WordInformation {
 
     public void setWord(Word word) {
         this.word = word;
-    }
-
-    public GeneratedContentStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(GeneratedContentStatus status) {
-        this.status = status;
     }
 }

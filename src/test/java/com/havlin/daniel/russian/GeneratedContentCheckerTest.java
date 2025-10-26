@@ -22,12 +22,12 @@ public class GeneratedContentCheckerTest {
         String oddStress = "Архите'ктор управл'ял ко'мнатами так иску'сно, что каза'лось, буд'то прострáнство танц'ует.";
 
         Assertions.assertAll(
-                () -> Assertions.assertTrue(GeneratedContentChecker.doesSentenceContainLettersWithStressMarks(cobaka)),
-                () -> Assertions.assertFalse(GeneratedContentChecker.doesSentenceContainLettersWithStressMarks(dom)),
-                () -> Assertions.assertTrue(GeneratedContentChecker.doesSentenceContainLettersWithStressMarks(collection)),
-                () -> Assertions.assertFalse(GeneratedContentChecker.doesSentenceContainLettersWithStressMarks(wordWithSingleQuote)),
-                () -> Assertions.assertTrue(GeneratedContentChecker.doesSentenceContainLettersWithStressMarks(wholeSentence)),
-                () -> Assertions.assertTrue(GeneratedContentChecker.doesSentenceContainLettersWithStressMarks(oddStress))
+                () -> Assertions.assertTrue(GeneratedContentChecker.doesSentenceContainLettersWithBuiltinStressMarks(cobaka)),
+                () -> Assertions.assertFalse(GeneratedContentChecker.doesSentenceContainLettersWithBuiltinStressMarks(dom)),
+                () -> Assertions.assertTrue(GeneratedContentChecker.doesSentenceContainLettersWithBuiltinStressMarks(collection)),
+                () -> Assertions.assertFalse(GeneratedContentChecker.doesSentenceContainLettersWithBuiltinStressMarks(wordWithSingleQuote)),
+                () -> Assertions.assertTrue(GeneratedContentChecker.doesSentenceContainLettersWithBuiltinStressMarks(wholeSentence)),
+                () -> Assertions.assertTrue(GeneratedContentChecker.doesSentenceContainLettersWithBuiltinStressMarks(oddStress))
 
         );
     }

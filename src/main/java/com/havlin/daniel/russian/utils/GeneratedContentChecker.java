@@ -1,16 +1,7 @@
 package com.havlin.daniel.russian.utils;
 
-import com.havlin.daniel.russian.entities.dictionary.Word;
-import com.havlin.daniel.russian.entities.dictionary.WordForm;
-import com.havlin.daniel.russian.repositories.dictionary.WordFormRepository;
-import com.havlin.daniel.russian.repositories.dictionary.WordRepository;
-import com.havlin.daniel.russian.services.generated_content.GeneratedContentErrorMessage;
-import com.havlin.daniel.russian.services.generated_content.GeneratedContentErrorType;
-
-import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 public class GeneratedContentChecker {
     private static final Pattern latinLetterPattern = Pattern.compile(".*[a-zA-Z\\\\p{Punct}].*");
@@ -21,7 +12,7 @@ public class GeneratedContentChecker {
         return matcher.find();
     }
 
-    public static boolean doesSentenceContainLettersWithStressMarks(String russianText) {
+    public static boolean doesSentenceContainLettersWithBuiltinStressMarks(String russianText) {
         Matcher matcher = cyrllicStressPattern.matcher(russianText);
         return matcher.find();
     }

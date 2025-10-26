@@ -115,7 +115,7 @@ public class Sentence {
             case "THIRD PERSON PLURAL":
                 this.setGrammarForm(GeneratedSentenceGrammarForm.THIRD_PERSON_PLURAL);
                 break;
-            case "PAST":
+            case "PAST", "NEUTER PAST":
                 this.setGrammarForm(GeneratedSentenceGrammarForm.PAST);
                 break;
             case "IMPERATIVE SINGULAR":

@@ -129,7 +129,7 @@ public class PromptGenerator {
         }
 
         prompt.append("""
-                For each word form listed above, you must create 2-3 unique sentences. Each sentence should be followed by its English translation, then the grammatical case/form (without mentioning the specific word, gender, number, or using the word "case").
+                You can only use these word forms and not call them by any other name. For each word form listed above, you must create 2-3 unique sentences. Each sentence should be followed by its English translation, then the grammatical case/form (without mentioning the specific word, gender, number, or using the word "case"). Nominative Participle is not a grammar form, do not use it.
                 
                 Requirements:
                 """ + " - Write sentences at ").append(level).append(" level Russian").append(""" 
@@ -139,7 +139,9 @@ public class PromptGenerator {
                 - Every sentence should be completely different and unique
                 - Do not write any numbers, explanations, or additional information
                 - Do not mention plural, singular, gender, or write "case" in your grammar descriptions
-                - Only identify the grammatical form (e.g., "Instrumental", "Genitive", "Short")
+                - Only identify the grammatical form (e.g., "Instrumental", "Genitive", "Short"). Do create any word forms other than the ones previously listed.
+                - The Gerund word form must be "Gerund Past" or "Gerund Present" just "Gerund" is an error.
+                - If the grammar form isn't one of the following, it is an error and should be changed to one of the following (Past, First Person Singular, Second Person Singular, Third Person Singular, First Person Plural, Second Person Plural, Third Person Plural, Gerund Present, Gerund Past, Participle Active Present, Participle Active Past, Participle Passive Present, Participle Passive Past, Imperative Singular, Imperative Plural, Nominative, Genitive, Dative, Accusative, Instrumental, Prepositional, Short, Comparative, Superlative).
                 
                 Format your output exactly like this example:
                 Кресть'яне торгу'ют зе'млями уже' не'сколько лет.
@@ -178,41 +180,6 @@ public class PromptGenerator {
                 "Большо'е живо'тное, кото'рое живёт в ле'су и е'ст ры'бу.\n" +
                 "Си'льный зверь с густо'й ше'рстью и больши'ми ла'пами.\n" +
                 "Косма'тое существо', кото'рое спит всю зи'му.";
-    }
-
-    public String getLongDefinitionPrompt(Word word) {
-        return "You will be writing a comprehensive definition in Russian for the following word:\n" +
-                "\n" +
-                "<word>\n" +
-                word.getAccented() +
-                "</word>\n" +
-                "\n" +
-                "Your task is to create a detailed definition of this word in Russian that is appropriate for B1 level Russian learners. Your definition must include all four of the following components:\n" +
-                "\n" +
-                "1. **Основное определение (Main definition)**: Explain what the word means using clear, accessible Russian vocabulary and sentence structures suitable for intermediate learners. Avoid overly complex grammatical constructions or advanced vocabulary.\n" +
-                "\n" +
-                "2. **Этимология/Происхождение (Etymology/Origin)**: If known, explain the origin of the word. This might include information about whether it was borrowed from another language (например, из английского языка), derived from Old Church Slavonic (из церковнославянского), formed from other Russian roots, etc. If the etymology is uncertain or unknown, state this clearly.\n" +
-                "\n" +
-                "3. **Контекст употребления (Usage context)**: Describe the situations, contexts, or registers where this word is typically used. For example, is it formal or informal? Is it used in specific professional contexts? Is it more common in written or spoken language? Is it used in particular regions?\n" +
-                "\n" +
-                "4. **Морфемный состав (Word formation)**: Analyze how the word is constructed by identifying its stems (корни), prefixes (приставки), and suffixes (суффиксы). Explain how these parts contribute to the word's meaning.\n" +
-                "\n" +
-                "**Critical formatting requirements:**\n" +
-                "- Each component should be on it's own line without using a header or the name of the component." +
-                "- The components should always be printed in the order given" +
-                "- Mark stress on ALL Russian words by placing an apostrophe (') immediately after the stressed vowel (for example: слово́ should be written as слово')\n" +
-                "- Write your entire response in Russian\n" +
-                "- Use vocabulary and grammar appropriate for B1 level learners\n" +
-                "- Organize your response in clear, well-structured paragraphs\n" +
-                "- Do not include the word itself as a header\n" +
-                "\n" +
-                "**Language level guidelines:**\n" +
-                "- Use common, everyday vocabulary when possible\n" +
-                "- Keep sentence structures relatively simple\n" +
-                "- Explain any technical linguistic terms you use\n" +
-                "- Write in a clear, educational tone suitable for language learners\n" +
-                "\n" +
-                "Begin your definition immediately without any preamble or introduction.";
     }
 
     public String[] getWordInformationPrompts(Word word) {
