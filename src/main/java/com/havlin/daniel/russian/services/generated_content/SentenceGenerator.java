@@ -6,6 +6,7 @@ import com.havlin.daniel.russian.repositories.dictionary.WordFormRepository;
 import com.havlin.daniel.russian.utils.GeneratedContentChecker;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 class SentenceGenerator {
@@ -68,6 +69,7 @@ class SentenceGenerator {
                 .map((wordForm -> wordForm.getAccented().toUpperCase()))
                 .toList();
 
+        // TODO lets add these to threads to see if we can speed up the process a little
         for (GeneratedContentService.GeneratedSentenceDTO sentenceSet: sentenceSets) {
             // Here we want to figure out which word form is used in the sentence
             // Split the sentence into a
@@ -87,8 +89,9 @@ class SentenceGenerator {
                 currentSentence.setText(sentenceSet.russianText);
                 currentSentence.setEnglishTranslation(sentenceSet.englishText);
                 currentSentence.setReadingLevel(readingLevel);
-                currentSentence.setGrammarFormFromString(sentenceSet.grammarForm);
 
+                // These two errors can only happen in the sentence creation so we will leave them here
+                currentSentence.setGrammarFormFromString(sentenceSet.grammarForm);
                 if (currentSentence.getGrammarForm() == GeneratedSentenceGrammarForm.ERROR)
                     errorMessages.add(new GeneratedContentErrorMessage(GeneratedContentErrorType.MISSING_GRAMMAR_FORM,
                             word + " is missing it's grammar form"));
@@ -99,11 +102,20 @@ class SentenceGenerator {
                             "The word form " + containingWordForm.getFirst() + " was not found"));
                 }
 
-                GeneratedContentCorrector.CorrectedContent correctedContent = generatedContentCorrector
-                        .correctTextIssuesAndLogErrors(sentenceSet.russianText);
+                // Shared possible errors, we are loading the functions into a list to run
+                List<Function<String, CorrectedContent>> correctors = List.of(
+                        generatedContentCorrector::correctBuiltinStressMarks,
+                        generatedContentCorrector::correctLatinLettersUsedAsCyrillic,
+                        generatedContentCorrector::correctMissingStressMark,
+                        generatedContentCorrector::correctSingleVowelStresses
+                );
 
-                errorMessages.addAll(correctedContent.errors());
-                sentenceSet.russianText = correctedContent.correctedText();
+                // Run each of the error checking function, applying the changes and adding the errors to the list
+                for (Function<String, CorrectedContent> correction : correctors) {
+                    CorrectedContent correctedContent = correction.apply(sentenceSet.russianText);
+                    errorMessages.addAll(correctedContent.errors());
+                    sentenceSet.russianText = correctedContent.correctedText();
+                }
 
                 // Convert the error messages to Error entities which will be later saved to the database
                 // We cannot save them now, as we need the sentence ID which won't exist until the db is flushed

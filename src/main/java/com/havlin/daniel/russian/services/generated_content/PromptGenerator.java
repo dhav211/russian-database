@@ -196,16 +196,7 @@ public class PromptGenerator {
                 "- A couple of sentences long\n" +
                 "- No more than one paragraph\n" +
                 "- Written at an intermediate (B1) level of Russian, using vocabulary and grammar structures appropriate for that level\n" +
-                "- Clear and easy to understand\n" +
-                "\n" +
-                "Important formatting requirement: In every word of your definition where a letter could potentially be stressed, you must put an apostrophe (') immediately after the stressed vowel letter. This applies to all words in your definition that have more than one syllable.\n" +
-                "\n" +
-                "For example:\n" +
-                "- \"слово́\" should be written as \"сло'во\"\n" +
-                "- \"определе́ние\" should be written as \"определе'ние\" \n" +
-                "- \"говори́ть\" should be written as \"говори'ть\"\n" +
-                "\n" +
-                "Single-syllable words do not need stress marks.";
+                "- Clear and easy to understand\n";
 
         // Etylomogy
         prompts[1] = "You will be writing the etymology of a Russian word in B1 level Russian.\n" +
@@ -220,18 +211,6 @@ public class PromptGenerator {
                 "- The origin of the word if known (for example, whether it was borrowed from another language like English - \"из английского языка\", derived from Old Church Slavonic - \"из церковнославянского\", formed from other Russian roots, etc.)\n" +
                 "- Any relevant historical or linguistic information about how the word developed\n" +
                 "- If the etymology is uncertain or unknown, clearly state this\n" +
-                "\n" +
-                "Critical formatting requirement: In every word of your response where a letter could potentially be stressed, you must put an apostrophe (') immediately after the stressed vowel letter. This applies to all Russian words in your explanation that have more than one syllable.\n" +
-                "\n" +
-                "Examples of correct stress marking:\n" +
-                "- \"слово́\" should be written as \"сло'во\"\n" +
-                "- \"определе́ние\" should be written as \"определе'ние\" \n" +
-                "- \"говори́ть\" should be written as \"говори'ть\"\n" +
-                "- \"английского\" should be written as \"англи'йского\"\n" +
-                "- \"церковнославянского\" should be written as \"церковнославя'нского\"\n" +
-                "\n" +
-                "Single-syllable words do not need stress marks.\n" +
-                "\n" +
                 "Write in clear, accessible Russian appropriate for B1 level learners.";
 
         // Usage Context
@@ -251,17 +230,7 @@ public class PromptGenerator {
                 "- What social situations or communication contexts is it appropriate for?\n" +
                 "- Are there any cultural or stylistic considerations?\n" +
                 "\n" +
-                "Write your response in Russian at a B1 level, using clear and accessible language that would be appropriate for intermediate Russian learners.\n" +
-                "\n" +
-                "CRITICAL FORMATTING REQUIREMENT: In every word of your response that has more than one syllable, you must put an apostrophe (') immediately after the stressed vowel letter. This applies to ALL multi-syllabic words in your description.\n" +
-                "\n" +
-                "Examples of correct stress marking:\n" +
-                "- \"определе'ние\" (not \"определение\")\n" +
-                "- \"ситуа'ция\" (not \"ситуация\") \n" +
-                "- \"испо'льзуется\" (not \"используется\")\n" +
-                "- \"письме'нный\" (not \"письменный\")\n" +
-                "\n" +
-                "Single-syllable words like \"в\", \"на\", \"это\", \"тот\" do not need stress marks.";
+                "Write your response in Russian at a B1 level, using clear and accessible language that would be appropriate for intermediate Russian learners.";
 
         // Word Formation
         prompts[3] = "You will be analyzing the word formation of a Russian word at B1 level. Here is the word to analyze:\n" +
@@ -281,20 +250,6 @@ public class PromptGenerator {
                 "2. Explain how these parts work together to create the word's meaning\n" +
                 "\n" +
                 "3. Write your explanation at B1 level - use clear, accessible language that an intermediate Russian learner would understand\n" +
-                "\n" +
-                "CRITICAL FORMATTING REQUIREMENT: You must mark stress in ALL multi-syllable words in your response. Place an apostrophe (') immediately after the stressed vowel letter in every word that has more than one syllable. Single-syllable words do not need stress marks.\n" +
-                "\n" +
-                "Examples of correct stress marking:\n" +
-                "- \"определе́ние\" → \"определе'ние\"\n" +
-                "- \"приста́вка\" → \"приста'вка\" \n" +
-                "- \"суффи́кс\" → \"суффи'кс\"\n" +
-                "- \"зна́чение\" → \"зна'чение\"\n" +
-                "- \"образова́н\" → \"образо'ван\"\n" +
-                "\n" +
-                "Do not mark stress in single-syllable words like \"корь\", \"дом\", \"сад\".\n" +
-                "\n" +
-                "Write your complete analysis in Russian, ensuring every multi-syllable word has proper stress marking with apostrophes.\n" +
-                "\n" +
                 "Do not include headers";
 
         return prompts;

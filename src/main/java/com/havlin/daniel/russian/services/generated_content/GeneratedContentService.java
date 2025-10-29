@@ -22,9 +22,6 @@ public class GeneratedContentService {
     @Value("${api.claude.key}")
     private String claudeKey;
 
-    //@Value("${api.gemini.key}")
-    private String geminiKey = "CREATE_ENVIRONMENTAL_VARIABLE";
-
     private final PromptGenerator promptGenerator;
     private final SentenceGenerator sentenceGenerator;
     private final DefinitionGenerator definitionGenerator;
@@ -42,8 +39,24 @@ public class GeneratedContentService {
         this.wordService = wordService;
     }
 
+    /**
+     * The entry point to generate content for a word. Currently, will generate sentences in all it's forms in multiple
+     * reading levels, a few short definitions, and the word information (etymology, formation, etc.). If simple errors
+     * are detected in any of the content it will try to correct the errors, if not the content will need approval and
+     * an error will be saved to the database.
+     * @param word A valid word entity that content will be generated for
+     * @param aiModel LLM model used to generate the content, right now we have Gemini and Claude.
+     */
     public void generateContentForWord(Word word, AiModel aiModel) {
+        if (word == null) { // Since the word supplied was null we cannot go any further
+            return;
+        }
+
         GeneratedContentDTO generatedContentDTO = getGeneratedContent(word, aiModel);
+
+        if (generatedContentDTO.hasError) { // There was an error in calling the API, exit from the function
+            return;
+        }
         CorrectedContentWithErrorsDTO correctedContentWithErrorsDTO = createCorrectedContentEntities(generatedContentDTO, word);
         wordService.saveGeneratedContentToWord(
                 correctedContentWithErrorsDTO.sentenceWithErrors.stream().map((s) -> s.sentence).toList(),
@@ -66,7 +79,7 @@ public class GeneratedContentService {
             // Here we start calling the llm api on threads
             LLMContentGenerator shortDefinitionGenerator = aiModel == AiModel.CLAUDE ?
                     new ClaudeContentGenerator(claudeKey, latch, promptGenerator.getShortDefinitionPrompt(word)) :
-                    new GeminiContentGenerator("NEEDSKEY", latch, promptGenerator.getShortDefinitionPrompt(word));
+                    new GeminiContentGenerator(latch, promptGenerator.getShortDefinitionPrompt(word));
             Future<String> definitionFuture = executor.submit(shortDefinitionGenerator);
 
             String[] wordInformationPrompts = promptGenerator.getWordInformationPrompts(word);
@@ -74,7 +87,7 @@ public class GeneratedContentService {
             for (int i = 0; i < wordInformationPrompts.length; i++) {
                 LLMContentGenerator wordInformationGenerator = aiModel == AiModel.CLAUDE ?
                         new ClaudeContentGenerator(claudeKey, latch, wordInformationPrompts[i]) :
-                        new GeminiContentGenerator(geminiKey, latch, wordInformationPrompts[i]);
+                        new GeminiContentGenerator(latch, wordInformationPrompts[i]);
                 switch (i) {
                     case 0 -> wordInformationFutureHolder.definition = executor.submit(wordInformationGenerator);
                     case 1 -> wordInformationFutureHolder.etymology = executor.submit(wordInformationGenerator);
@@ -88,7 +101,7 @@ public class GeneratedContentService {
             for (ReadingLevel readingLevel : ReadingLevel.values()) {
                 LLMContentGenerator sentenceGenerator = aiModel == AiModel.CLAUDE ?
                         new ClaudeContentGenerator(claudeKey, latch, promptGenerator.buildPromptForSentenceGeneration(word, readingLevel)) :
-                        new GeminiContentGenerator(geminiKey, latch, promptGenerator.buildPromptForSentenceGeneration(word, readingLevel));
+                        new GeminiContentGenerator(latch, promptGenerator.buildPromptForSentenceGeneration(word, readingLevel));
                 uneditedGeneratedSentenceFutures.put(readingLevel, executor.submit(sentenceGenerator));
             }
 

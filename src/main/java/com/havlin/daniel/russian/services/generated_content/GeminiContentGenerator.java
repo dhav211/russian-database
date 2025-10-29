@@ -10,8 +10,8 @@ import java.util.concurrent.CountDownLatch;
 public class GeminiContentGenerator extends LLMContentGenerator{
     private static final Logger log = LoggerFactory.getLogger(GeminiContentGenerator.class);
     private final Client client;
-    public GeminiContentGenerator(String key, CountDownLatch latch, String prompt) {
-        super(key, latch, prompt);
+    public GeminiContentGenerator(CountDownLatch latch, String prompt) {
+        super("", latch, prompt);
         client = new Client();
     }
 

@@ -24,14 +24,45 @@ class GeneratedContentCorrector {
         this.wordFormRepository = wordFormRepository;
     }
 
-    /**
-     * Correct issues that are common with all generated content (sentence, definition, etc.). If the content cannot be corrected
-     * we can log the error with a simple message that will aid in human intervention of the content.
-     * @param text The russian text that will be corrected.
-     * @return CorrectContent is a simple class that contains the list of errors and the correct text.
-     */
-    public CorrectedContent correctTextIssuesAndLogErrors(String text) {
+    CorrectedContent correctMissingStressMark(String text) {
         List<GeneratedContentErrorMessage> errors = new ArrayList<>();
+        List<String> wordsMissingStress = findWordsWithMissingStress(text);
+        if (!wordsMissingStress.isEmpty()) {
+            StressLetterCorrections stressLetterCorrections = getUnstressedCorrections(wordsMissingStress);
+            text = addStressToWords(stressLetterCorrections, text);
+
+            if (!stressLetterCorrections.canBeCompletelyCorrected()) {
+                stressLetterCorrections.uncorrectable.forEach((uncorrectable) -> {
+                    errors.add(new GeneratedContentErrorMessage(GeneratedContentErrorType.MISSING_STRESS_MARK,
+                            uncorrectable + " is missing a stress mark"));
+                });
+            }
+        }
+
+        return new CorrectedContent(errors, text);
+    }
+
+    CorrectedContent correctLatinLettersUsedAsCyrillic(String text) {
+        List<GeneratedContentErrorMessage> errors = new ArrayList<>();
+        if (GeneratedContentChecker.doesSentenceContainLatinLetters(text))
+        {
+            List<String> wordsWithLatinLetters = findWordsWithLatinLetters(text);
+            text = replaceEnglishCharacters(text);
+
+            wordsWithLatinLetters.forEach((wordWithLatinLetters) -> {
+                if (!wordFormRepository.existsByAccented(wordWithLatinLetters)) { // even after being fixed the word still does not exist
+                    errors.add(new GeneratedContentErrorMessage(GeneratedContentErrorType.LATIN_LETTERS,
+                            "Latin letters were found in the word " + wordWithLatinLetters + " and it couldn't be corrected."));
+                }
+            });
+        }
+
+        return new CorrectedContent(errors, text);
+    }
+
+    CorrectedContent correctBuiltinStressMarks(String text) {
+        List<GeneratedContentErrorMessage> errors = new ArrayList<>();
+
         if (GeneratedContentChecker.doesSentenceContainLettersWithBuiltinStressMarks(text)) {
             List<String> stressedWords = findWordsWithBuiltinStressedLetter(text);
             text = replaceStressedLetters(text);
@@ -57,36 +88,20 @@ class GeneratedContentCorrector {
             });
         }
 
-        if (GeneratedContentChecker.doesSentenceContainLatinLetters(text))
-        {
-            List<String> wordsWithLatinLetters = findWordsWithLatinLetters(text);
-            text = replaceEnglishCharacters(text);
-
-            wordsWithLatinLetters.forEach((wordWithLatinLetters) -> {
-                if (!wordFormRepository.existsByAccented(wordWithLatinLetters)) { // even after being fixed the word still does not exist
-                    errors.add(new GeneratedContentErrorMessage(GeneratedContentErrorType.LATIN_LETTERS,
-                            "Latin letters were found in the word " + wordWithLatinLetters + " and it couldn't be corrected."));
-                }
-            });
-        }
-
-        List<String> wordsMissingStress = findWordsWithMissingStress(text);
-        if (!wordsMissingStress.isEmpty()) {
-            StressLetterCorrections stressLetterCorrections = getUnstressedCorrections(wordsMissingStress);
-            text = addStressToWords(stressLetterCorrections, text);
-
-            if (!stressLetterCorrections.canBeCompletelyCorrected()) {
-                stressLetterCorrections.uncorrectable.forEach((uncorrectable) -> {
-                    errors.add(new GeneratedContentErrorMessage(GeneratedContentErrorType.MISSING_STRESS_MARK,
-                        uncorrectable + " is missing a stress mark"));
-                });
-            }
-        }
-
-        // Occasionally the LLM wants to stress a word with a single vowel, this will correct that issue
-        removeSingleVowelStresses(text);
-
         return new CorrectedContent(errors, text);
+    }
+
+    CorrectedContent correctSingleVowelStresses(String text) {
+        return new CorrectedContent(new ArrayList<>(), Arrays.stream(text.split(" ")).map((word) -> {
+            if (getNumberOfVowels(word) == 1 && word.contains("'")) {
+                StringBuilder corrected = new StringBuilder(word);
+                int stressIndex = word.indexOf('\'');
+                corrected.deleteCharAt(stressIndex);
+                return corrected.toString();
+            } else {
+                return word;
+            }
+        }).collect(Collectors.joining(" ")));
     }
 
     private String replaceEnglishCharacters(String russianText) {
@@ -221,19 +236,6 @@ class GeneratedContentCorrector {
         return corrected.toString();
     }
 
-    String removeSingleVowelStresses(String russianText) {
-        return Arrays.stream(russianText.split(" ")).map((word) -> {
-            if (getNumberOfVowels(word) == 1 && word.contains("'")) {
-                StringBuilder corrected = new StringBuilder(word);
-                int stressIndex = word.indexOf('\'');
-                corrected.deleteCharAt(stressIndex);
-                return corrected.toString();
-            } else {
-                return word;
-            }
-        }).collect(Collectors.joining(" "));
-    }
-
     /**
      * Finds any words that don't have stress but could be stressed.
      * @param text The Russian text that will be searched.
@@ -310,20 +312,11 @@ class GeneratedContentCorrector {
     }
 
     /**
-     * A simple POJO that is only used when returning the errors discovered when correcting. This will help us correct
-     * any issues with a sentence by hand. When a sentence can't be fixed automatically, the error will be added to this
-     * list with a simple explanation.
-     * @param errors Errors that have been discovered and need to be fixed.
-     * @param correctedText The best attempt at correcting the test, if there are no errors detected we can be reasonable confident its correct.
-     */
-    record CorrectedContent(List<GeneratedContentErrorMessage> errors, String correctedText) {}
-
-    /**
      * Holds the corrections that will be to a sentence with words missing stress marks. The Map object holds the unstressed/stress
      * pair, which will make finding the word in the sentence, and then correcting it easier. The list of uncorrectable words
      * will be used for logging errors after the correction attempt has been made.
      */
-    private class StressLetterCorrections {
+    private static class StressLetterCorrections {
         private final Map<String, String> correctableWords = new HashMap<>();
         private final List<String> uncorrectable = new ArrayList<>();
 

@@ -10,6 +10,7 @@ import com.havlin.daniel.russian.utils.GeneratedContentChecker;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 
 public class DefinitionGenerator {
     private final GeneratedContentCorrector generatedContentCorrector;
@@ -36,11 +37,21 @@ public class DefinitionGenerator {
                 .map((line) -> {
             Definition definition = new Definition();
             List<GeneratedContentErrorMessage> errorMessages = new ArrayList<>();
-            GeneratedContentCorrector.CorrectedContent correctedContent = generatedContentCorrector
-                    .correctTextIssuesAndLogErrors(line);
-            errorMessages.addAll(correctedContent.errors());
 
-            definition.setText(correctedContent.correctedText());
+            List<Function<String, CorrectedContent>> correctors = List.of(
+                    generatedContentCorrector::correctBuiltinStressMarks,
+                    generatedContentCorrector::correctLatinLettersUsedAsCyrillic,
+                    generatedContentCorrector::correctMissingStressMark,
+                    generatedContentCorrector::correctSingleVowelStresses
+            );
+
+            for (Function<String, CorrectedContent> correction : correctors) {
+                CorrectedContent correctedContent = correction.apply(line);
+                errorMessages.addAll(correctedContent.errors());
+                line = correctedContent.correctedText();
+            }
+
+            definition.setText(line);
             definition.setWord(word);
             word.getDefinitions().add(definition);
 
@@ -72,20 +83,11 @@ public class DefinitionGenerator {
                                                  Word word) {
         WordInformation wordInformation = new WordInformation();
         wordInformation.setWord(word);
+        wordInformation.setFormation(formation);
+        wordInformation.setDefinition(definition);
+        wordInformation.setUsageContext(usageContext);
+        wordInformation.setEtymology(etymology);
         word.setWordInformation(wordInformation);
-
-        String[] informationFields = { definition, etymology, usageContext, formation };
-        for (int i = 0; i < informationFields.length; i ++) {
-            GeneratedContentCorrector.CorrectedContent corrections = generatedContentCorrector
-                    .correctTextIssuesAndLogErrors(informationFields[i]);
-
-            switch (i) {
-                case 0 -> wordInformation.setDefinition(corrections.correctedText());
-                case 1 -> wordInformation.setEtymology(corrections.correctedText());
-                case 2 -> wordInformation.setUsageContext(corrections.correctedText());
-                case 3 -> wordInformation.setFormation(corrections.correctedText());
-            }
-        }
 
         return wordInformation;
     }

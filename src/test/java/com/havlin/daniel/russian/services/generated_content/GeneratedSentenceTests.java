@@ -43,7 +43,6 @@ public class GeneratedSentenceTests {
     public void generateContentToDB() {
         Word word = wordRepository.findById(170L).get();
         generatedContentService.generateContentForWord(word, AiModel.GEMINI);
-        List<GeneratedContentError> errors = generatedContentErrorRepository.findAllByOriginatingEntityId(170L);
 
         Assertions.assertAll(
                 () -> Assertions.assertFalse(word.getSentences().isEmpty())

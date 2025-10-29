@@ -83,7 +83,7 @@ public class GeneratedContentCorrectorTests {
 
         Assertions.assertAll(
                 () -> Assertions.assertEquals("В библиоте'ке я чита'ю то'лстых книг о и'стории Росси'и.",
-                        generatedContentCorrector.removeSingleVowelStresses("В библиоте'ке я' чита'ю то'лстых кни'г о' и'стории Росси'и."))
+                        generatedContentCorrector.correctSingleVowelStresses("В библиоте'ке я' чита'ю то'лстых кни'г о' и'стории Росси'и."))
         );
     }
 }
