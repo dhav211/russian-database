@@ -1,13 +1,12 @@
 package com.havlin.daniel.russian.entities.retrieval;
 
-import com.havlin.daniel.russian.entities.dictionary.VerbAspect;
-import com.havlin.daniel.russian.entities.dictionary.WordLevel;
-import com.havlin.daniel.russian.entities.dictionary.WordType;
+import com.havlin.daniel.russian.entities.dictionary.*;
+import com.havlin.daniel.russian.utils.StressedWordConverter;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class VerbDTO extends WordRetrievalDTO {
+public class VerbDTO  {
     private List<String> partners = new ArrayList<>();
     private VerbAspect aspect;
     private String singularImperative;
@@ -29,15 +28,76 @@ public class VerbDTO extends WordRetrievalDTO {
     private String participlePassivePresent;
     private String participlePassivePast;
 
-    public static VerbDTO getError() {
-        VerbDTO error = new VerbDTO();
 
-        error.setBareText("ERROR");
-        error.setAccentedText("ERROR");
-        error.setWordType(WordType.ERROR);
-        error.setWordLevel(WordLevel.ERROR);
 
-        return error;
+    public VerbDTO(Word word) {
+        this.aspect = word.getVerb().getAspect();
+
+        // We need the word object from the verb partner, for easier access later
+        for (VerbPartner partner : word.getVerb().getPartners()) {
+            this.partners.add(partner.getText());
+        }
+
+        // Set all individual word forms for the verb
+        for (WordForm wordForm : word.getWordForms()) {
+            String stressAddedForm = StressedWordConverter.addStressMarks(wordForm.getAccented());
+            switch (wordForm.getFormType()) {
+                case "ru_verb_imperative_sg":
+                    this.setSingularImperative(stressAddedForm);
+                    break;
+                case "ru_verb_imperative_pl":
+                    this.setPluralImperative(stressAddedForm);
+                    break;
+                case "ru_verb_past_m":
+                    this.setMasculinePast(stressAddedForm);
+                    break;
+                case "ru_verb_past_f":
+                    this.setFemininePast(stressAddedForm);
+                    break;
+                case "ru_verb_past_n":
+                    this.setNeuterPast(stressAddedForm);
+                    break;
+                case "ru_verb_past_pl":
+                    this.setPluralPast(stressAddedForm);
+                    break;
+                case "ru_verb_presfut_sg1":
+                    this.setPresentFutureSingularFirst(stressAddedForm);
+                    break;
+                case "ru_verb_presfut_sg2":
+                    this.setPresentFutureSingularSecond(stressAddedForm);
+                    break;
+                case "ru_verb_presfut_sg3":
+                    this.setPresentFutureSingularThird(stressAddedForm);
+                    break;
+                case "ru_verb_presfut_pl1":
+                    this.setPresentFuturePluralFirst(stressAddedForm);
+                    break;
+                case "ru_verb_presfut_pl2":
+                    this.setPresentFuturePluralSecond(stressAddedForm);
+                    break;
+                case "ru_verb_presfut_pl3":
+                    this.setPresentFuturePluralThird(stressAddedForm);
+                    break;
+                case "ru_verb_gerund_present":
+                    this.setGerundPresent(stressAddedForm);
+                    break;
+                case "ru_verb_gerund_past":
+                    this.setGerundPast(stressAddedForm);
+                    break;
+                case "ru_verb_participle_active_present":
+                    this.setParticipleActivePresent(stressAddedForm);
+                    break;
+                case "ru_verb_participle_active_past":
+                    this.setParticipleActivePast(stressAddedForm);
+                    break;
+                case "ru_verb_participle_passive_present":
+                    this.setParticiplePassivePresent(stressAddedForm);
+                    break;
+                case "ru_verb_participle_passive_past":
+                    this.setParticiplePassivePast(stressAddedForm);
+                    break;
+            }
+        }
     }
 
     public List<String> getPartners() {

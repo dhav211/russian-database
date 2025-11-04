@@ -1,9 +1,12 @@
 package com.havlin.daniel.russian.entities.retrieval;
 
+import com.havlin.daniel.russian.entities.dictionary.Word;
+import com.havlin.daniel.russian.entities.dictionary.WordForm;
 import com.havlin.daniel.russian.entities.dictionary.WordLevel;
 import com.havlin.daniel.russian.entities.dictionary.WordType;
+import com.havlin.daniel.russian.utils.StressedWordConverter;
 
-public class AdjectiveDTO extends WordRetrievalDTO {
+public class AdjectiveDTO {
     private String comparative;
     private String superlative;
     private String masculineShort;
@@ -35,15 +38,121 @@ public class AdjectiveDTO extends WordRetrievalDTO {
     private String pluralAccusative;
     private String pluralPrepositional;
 
-    public static AdjectiveDTO getError() {
-        AdjectiveDTO error = new AdjectiveDTO();
+    public AdjectiveDTO(Word word) {
+        for (WordForm wordForm : word.getWordForms()) {
+            if (wordForm.getAccented() != null) {
+                String stressAddedForm = StressedWordConverter.addStressMarks(wordForm.getAccented());
 
-        error.setBareText("ERROR");
-        error.setAccentedText("ERROR");
-        error.setWordType(WordType.ERROR);
-        error.setWordLevel(WordLevel.ERROR);
+                switch (wordForm.getFormType()) {
+                    case "ru_adj_comparative":
+                        this.setComparative(stressAddedForm);
+                        break;
+                    case "ru_adj_superlative":
+                        this.setSuperlative(stressAddedForm);
+                        break;
+                    case "ru_adj_short_m":
+                        this.setMasculineShort(stressAddedForm);
+                        break;
+                    case "ru_adj_short_f":
+                        this.setFeminineShort(stressAddedForm);
+                        break;
+                    case "ru_adj_short_n":
+                        this.setNeuterShort(stressAddedForm);
+                        break;
+                    case "ru_adj_short_pl":
+                        this.setPluralShort(stressAddedForm);
+                        break;
+                    case "ru_adj_m_nom":
+                        this.setMasculineNominative(stressAddedForm);
+                        break;
+                    case "ru_adj_m_gen":
+                        this.setMasculineGenitive(stressAddedForm);
+                        break;
+                    case "ru_adj_m_dat":
+                        this.setMasculineDative(stressAddedForm);
+                        break;
+                    case "ru_adj_m_acc":
+                        // animate male nouns will change case differently than inanimate, this will affect adjectives
+                        if (this.getMasculineAccusative() == null) {
+                            this.setMasculineAccusative(stressAddedForm);
+                        } else {
 
-        return error;
+                            this.setMasculineAccusative(this.getMasculineAccusative() + ", " + stressAddedForm);
+                        }
+                        break;
+                    case "ru_adj_m_inst":
+                        this.setMasculineInstrumental(stressAddedForm);
+                        break;
+                    case "ru_adj_m_prep":
+                        this.setMasculinePrepositional(stressAddedForm);
+                        break;
+                    case "ru_adj_f_nom":
+                        this.setFeminineNominative(stressAddedForm);
+                        break;
+                    case "ru_adj_f_gen":
+                        this.setFeminineGenitive(stressAddedForm);
+                        break;
+                    case "ru_adj_f_dat":
+                        this.setFeminineDative(stressAddedForm);
+                        break;
+                    case "ru_adj_f_acc":
+                        this.setFeminineAccusative(stressAddedForm);
+                        break;
+                    case "ru_adj_f_inst":
+                        // There can be multiple entries in this case, here we will display them with a comma in between
+                        if (this.getFeminineInstrumental() == null) {
+                            this.setFeminineInstrumental(stressAddedForm);
+                        } else {
+                            this.setFeminineInstrumental(this.getFeminineInstrumental() + ", " + stressAddedForm);
+                        }
+                        break;
+                    case "ru_adj_f_prep":
+                        this.setFemininePrepositional(stressAddedForm);
+                        break;
+                    case "ru_adj_n_nom":
+                        this.setNeuterNominative(stressAddedForm);
+                        break;
+                    case "ru_adj_n_gen":
+                        this.setNeuterGenitive(stressAddedForm);
+                        break;
+                    case "ru_adj_n_dat":
+                        this.setNeuterDative(stressAddedForm);
+                        break;
+                    case "ru_adj_n_acc":
+                        this.setNeuterAccusative(stressAddedForm);
+                        break;
+                    case "ru_adj_n_inst":
+                        this.setNeuterInstrumental(stressAddedForm);
+                        break;
+                    case "ru_adj_n_prep":
+                        this.setNeuterPrepositional(stressAddedForm);
+                        break;
+                    case "ru_adj_pl_nom":
+                        this.setPluralNominative(stressAddedForm);
+                        break;
+                    case "ru_adj_pl_gen":
+                        this.setPluralGenitive(stressAddedForm);
+                        break;
+                    case "ru_adj_pl_dat":
+                        this.setPluralDative(stressAddedForm);
+                        break;
+                    case "ru_adj_pl_acc":
+                        // animate male nouns will change case differently than inanimate, this will affect adjectives
+                        if (this.getPluralAccusative() == null) {
+                            this.setPluralAccusative(stressAddedForm);
+                        } else {
+                            this.setPluralAccusative(this.getPluralAccusative() + ", " + stressAddedForm);
+                        }
+                        break;
+                    case "ru_adj_pl_inst":
+                        this.setPluralInstrumental(stressAddedForm);
+                        break;
+                    case "ru_adj_pl_prep":
+                        this.setPluralPrepositional(stressAddedForm);
+                        break;
+                }
+            }
+        }
     }
 
     public String getComparative() {

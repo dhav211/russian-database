@@ -1,9 +1,12 @@
 package com.havlin.daniel.russian.entities.retrieval;
 
+import com.havlin.daniel.russian.entities.dictionary.Word;
+import com.havlin.daniel.russian.entities.dictionary.WordForm;
 import com.havlin.daniel.russian.entities.dictionary.WordLevel;
 import com.havlin.daniel.russian.entities.dictionary.WordType;
+import com.havlin.daniel.russian.utils.StressedWordConverter;
 
-public class NounDTO extends WordRetrievalDTO{
+public class NounDTO {
     private String nominativeSingular;
     private String genitiveSingular;
     private String dativeSingular;
@@ -17,15 +20,49 @@ public class NounDTO extends WordRetrievalDTO{
     private String accusativePlural;
     private String prepositionalPlural;
 
-    public static NounDTO getError() {
-        NounDTO error = new NounDTO();
-
-        error.setBareText("ERROR");
-        error.setAccentedText("ERROR");
-        error.setWordType(WordType.ERROR);
-        error.setWordLevel(WordLevel.ERROR);
-
-        return error;
+    public NounDTO(Word word) {
+        for (WordForm wordForm : word.getWordForms()) {
+            String stressAddedForm = StressedWordConverter.addStressMarks(wordForm.getAccented());
+            
+            switch (wordForm.getFormType()) {
+                case "ru_noun_sg_nom":
+                    this.setNominativeSingular(stressAddedForm);
+                    break;
+                case "ru_noun_sg_gen":
+                    this.setGenitiveSingular(stressAddedForm);
+                    break;
+                case "ru_noun_sg_dat":
+                    this.setDativeSingular(stressAddedForm);
+                    break;
+                case "ru_noun_sg_acc":
+                    this.setAccusativeSingular(stressAddedForm);
+                    break;
+                case "ru_noun_sg_inst":
+                    this.setInstrumentalSingular(stressAddedForm);
+                    break;
+                case "ru_noun_sg_prep":
+                    this.setPrepositionalSingular(stressAddedForm);
+                    break;
+                case "ru_noun_pl_nom":
+                    this.setNominativePlural(stressAddedForm);
+                    break;
+                case "ru_noun_pl_gen":
+                    this.setGenitivePlural(stressAddedForm);
+                    break;
+                case "ru_noun_pl_dat":
+                    this.setDativePlural(stressAddedForm);
+                    break;
+                case "ru_noun_pl_acc":
+                    this.setAccusativePlural(stressAddedForm);
+                    break;
+                case "ru_noun_pl_inst":
+                    this.setInstrumentalPlural(stressAddedForm);
+                    break;
+                case "ru_noun_pl_prep":
+                    this.setPrepositionalPlural(stressAddedForm);
+                    break;
+            }
+        }
     }
 
     public String getNominativeSingular() {

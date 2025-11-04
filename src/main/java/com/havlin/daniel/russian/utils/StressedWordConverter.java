@@ -1,12 +1,14 @@
 package com.havlin.daniel.russian.utils;
 
+import org.jetbrains.annotations.NotNull;
+
 public class StressedWordConverter {
     private static final String[] stressedLetters = {"А́", "Б́", "В́", "Ѓ", "Д́", "Е́", "Ё", "Ж́", "З́", "И́", "Й́", "Ќ", "Л́", "М́", "Н́",
             "О́", "П́", "Р́", "С́", "Т́", "У́", "Ф́", "Х́", "Ц́", "Ч́", "Ш́", "Щ́", "Ъ́", "Ы́", "Ь́", "Э́", "Ю́", "Я́", "а́", "б́", "в́", "ѓ",
             "д́", "е́", "ё", "ж́", "з́", "и́", "й́", "ќ", "л́", "м́", "н́", "о́", "п́", "р́", "с́", "т́", "у́", "ф́", "х́", "ц́", "ч́", "ш́",
             "щ́", "ъ́", "ы́", "ь́", "э́", "ю́", "я́"};
 
-    public static String addStressMarks(String word) {
+    public static String addStressMarks(@NotNull String word) {
         StringBuilder stringBuilder = new StringBuilder(word);
 
         // Loop through the string until we find the ' indicating the stress
@@ -29,7 +31,7 @@ public class StressedWordConverter {
         return stringBuilder.toString();
     }
 
-    public static String removeStressMarks(String stressedWord) {
+    public static String removeStressMarks(@NotNull String stressedWord) {
         StringBuilder stringBuilder = new StringBuilder(stressedWord);
 
         // Loop through each of the possible stress letters, we will attempt to remove any possible occurrence of this

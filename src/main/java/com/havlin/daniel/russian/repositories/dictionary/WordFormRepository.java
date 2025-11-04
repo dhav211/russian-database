@@ -17,6 +17,12 @@ public interface WordFormRepository extends JpaRepository<WordForm, Long> {
 
     @Query("SELECT wf.accented FROM WordForm wf WHERE wf.bare = :bareText")
     List<String> findAccentedByBare(@Param("bareText") String bareText);
+//SELECT w FROM Word w LEFT JOIN FETCH w.sentences JOIN FETCH w.wordForms WHERE w.id = :id
+    @Query("SELECT wf.word FROM WordForm wf " +
+            "LEFT JOIN FETCH wf.word.wordForms " +
+            "LEFT JOIN FETCH wf.word.translations " +
+            "WHERE wf.bare = :bareText")
+    Set<Word> findAllMatchWordsByBareWordForm(@Param("bareText") String bareText);
 
     boolean existsByAccented(String accented);
 }

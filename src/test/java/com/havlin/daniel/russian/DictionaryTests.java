@@ -31,6 +31,33 @@ public class DictionaryTests {
     @Autowired
     private WordFormRepository wordFormRepository;
 
+    private ClickedWordDTO getFirstFromSetOfWordType(Set<ClickedWordDTO> dtoSet, WordType wordType) {
+        for (ClickedWordDTO wordDTO : dtoSet) {
+            if (wordDTO.getWordType() == wordType)
+                return wordDTO;
+        }
+
+        return  null;
+    }
+
+    @Test
+    void getClickedWordDTO() {
+        Set<ClickedWordDTO> thoughtSet = wordRetrievalService.getClickedWord("мысль");
+        ClickedWordDTO thought = thoughtSet.stream().findFirst().get();
+        ClickedWordDTO ruskyAdjective = getFirstFromSetOfWordType(wordRetrievalService.getClickedWord("русских"), WordType.ADJECTIVE);
+        ClickedWordDTO throwVerb = getFirstFromSetOfWordType(wordRetrievalService.getClickedWord("бросишь"), WordType.VERB);
+        ClickedWordDTO slishkom = getFirstFromSetOfWordType(wordRetrievalService.getClickedWord("слишком"), WordType.ADVERB);
+
+        Assertions.assertAll(
+                () -> Assertions.assertEquals(1, thoughtSet.size()),
+                () -> Assertions.assertNotNull(thought.getNounDTO()),
+                () -> Assertions.assertEquals("мы́сли", thought.getNounDTO().getAccusativePlural()),
+                () -> Assertions.assertEquals("ру́сскому", ruskyAdjective.getAdjectiveDTO().getMasculineDative()),
+                () -> Assertions.assertEquals("бро́сишь", throwVerb.getVerbDTO().getPresentFutureSingularSecond()),
+                () -> Assertions.assertEquals("сли́шком", slishkom.getText())
+        );
+    }
+
     @Test
     void findAllAccentedByBareText() {
         List<String> accented = wordFormRepository.findAccentedByBare("достижения");
@@ -51,84 +78,6 @@ public class DictionaryTests {
         Assertions.assertEquals(noun, WordType.NOUN);
         Assertions.assertEquals(adjective, WordType.ADJECTIVE);
         Assertions.assertEquals(error, WordType.ERROR);
-    }
-
-    @Test
-    void getVerbs() {
-        Word word = wordRepository.findById(32L).get();
-        Word word2 = wordRepository.findById(204L).get();
-        Word notVerb = wordRepository.findById(190L).get();
-        VerbDTO verbDTO1 = wordRetrievalService.getVerbDtoFromWord(word);
-        VerbDTO verbDTO2 = wordRetrievalService.getVerbDtoFromWord(word2);
-        VerbDTO verbDTO3 = wordRetrievalService.getVerbDtoFromWord(notVerb);
-
-        Assertions.assertAll(
-                () -> Assertions.assertEquals(verbDTO1.getPresentFuturePluralSecond(), "мо'жете"),
-                () -> Assertions.assertEquals(verbDTO1.getFemininePast(), "могла'"),
-                () -> Assertions.assertEquals(verbDTO1.getPresentFuturePluralThird(), "мо'гут"),
-                () -> Assertions.assertEquals(verbDTO2.getPartners().get(0), "смотреть"),
-                () -> Assertions.assertEquals(verbDTO2.getAspect(), VerbAspect.PERFECTIVE),
-                () -> Assertions.assertEquals(verbDTO2.getPresentFutureSingularFirst(), "посмотрю'"),
-                () -> Assertions.assertEquals(verbDTO3.getBareText(), "ERROR")
-        );
-    }
-
-    @Test
-    public void getNouns() {
-        Word word1 = wordRepository.findById(185L).get();
-        NounDTO nounDTO1 = wordRetrievalService.getNounDtoFromWord(word1);
-
-        Assertions.assertAll(
-                () -> Assertions.assertEquals(nounDTO1.getAccusativePlural(), "стра'ны"),
-                () -> Assertions.assertEquals(nounDTO1.getPrepositionalSingular(), "стране'"),
-                () -> Assertions.assertEquals(nounDTO1.getDativeSingular(), "стране'"),
-                () -> Assertions.assertEquals(nounDTO1.getDativePlural(), "стра'нам")
-        );
-    }
-
-    @Test
-    public void getAdjectives() {
-        Word word1 = wordRepository.findById(232L).get();
-        Word word2 = wordRepository.findById(286L).get();
-        AdjectiveDTO adjectiveDTO1 = wordRetrievalService.getAdjectiveDtoFromWord(word1);
-        AdjectiveDTO adjectiveDTO2 = wordRetrievalService.getAdjectiveDtoFromWord(word2);
-
-        Set<Word> words3 = wordRetrievalService.getWordsFromAccentedText("чёртовые");
-        Optional<Word> wordFromSet = words3.stream().findFirst();
-        AdjectiveDTO adjectiveDTO3;
-        adjectiveDTO3 = wordFromSet.map(word -> wordRetrievalService.getAdjectiveDtoFromWord(word)).orElse(null);
-
-
-        Assertions.assertAll(
-                () -> Assertions.assertNull(adjectiveDTO1.getComparative()),
-                () -> Assertions.assertEquals(adjectiveDTO1.getFeminineNominative(), "сове'тская"),
-                () -> Assertions.assertEquals(adjectiveDTO1.getMasculineInstrumental(), "сове'тским"),
-                () -> Assertions.assertEquals(adjectiveDTO2.getFeminineInstrumental(), "кра'сной, кра'сною"),
-                () -> Assertions.assertEquals(adjectiveDTO3.getMasculineAccusative(), "чёртовый, чёртового")
-        );
-    }
-
-    @Test
-    public void getOthers() {
-        Word word = wordRepository.findById(187L).get();
-        OtherDTO otherDTO = wordRetrievalService.getOtherDtoByWord(word);
-
-        Assertions.assertAll(
-                () -> Assertions.assertEquals("ме'жду", otherDTO.getAccentedText()),
-                () -> Assertions.assertEquals(WordLevel.A2, otherDTO.getWordLevel())
-        );
-    }
-
-    @Test
-    public void getAdverbs() {
-        Word word = wordRepository.findById(380L).get();
-        AdverbDTO adverbDTO = wordRetrievalService.getAdverbDtoByWord(word);
-
-        Assertions.assertAll(
-                () -> Assertions.assertEquals("ма'ло", adverbDTO.getAccentedText()),
-                () -> Assertions.assertEquals("мало", adverbDTO.getBareText()),
-                () -> Assertions.assertEquals(2, adverbDTO.getTranslations().size())
-        );
     }
 
     @Test
