@@ -44,6 +44,8 @@ public class PromptGenerator {
             }
 
             switch (forms.get(i).getFormType()) {
+                case "ru_base":
+                    prompt.append("Base: ");
                 // Verbs
                 case "ru_verb_past_m", "ru_verb_past_f", "ru_verb_past_n", "ru_verb_past_pl":
                     prompt.append("Past: ");

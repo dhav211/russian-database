@@ -10,6 +10,8 @@ import com.havlin.daniel.russian.repositories.generated_content.SentenceReposito
 import com.havlin.daniel.russian.repositories.generated_content.WordInformationRepository;
 import com.havlin.daniel.russian.services.dictionary.WordService;
 import jakarta.transaction.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -19,6 +21,7 @@ import java.util.concurrent.*;
 
 @Service
 public class GeneratedContentService {
+    private static final Logger log = LoggerFactory.getLogger(GeneratedContentService.class);
     @Value("${api.claude.key}")
     private String claudeKey;
 
@@ -48,22 +51,26 @@ public class GeneratedContentService {
      * @param aiModel LLM model used to generate the content, right now we have Gemini and Claude.
      */
     public void generateContentForWord(Word word, AiModel aiModel) {
-        if (word == null) { // Since the word supplied was null we cannot go any further
-            return;
-        }
+        try {
+            if (word == null) { // Since the word supplied was null we cannot go any further
+                return;
+            }
 
-        GeneratedContentDTO generatedContentDTO = getGeneratedContent(word, aiModel);
+            GeneratedContentDTO generatedContentDTO = getGeneratedContent(word, aiModel);
 
-        if (generatedContentDTO.hasError) { // There was an error in calling the API, exit from the function
-            return;
+            if (generatedContentDTO.hasError) { // There was an error in calling the API, exit from the function
+                return;
+            }
+            CorrectedContentWithErrorsDTO correctedContentWithErrorsDTO = createCorrectedContentEntities(generatedContentDTO, word);
+            wordService.saveGeneratedContentToWord(
+                    correctedContentWithErrorsDTO.sentenceWithErrors.stream().map((s) -> s.sentence).toList(),
+                    correctedContentWithErrorsDTO.definitionWithErrors.stream().map((d) -> d.definition).toList(),
+                    correctedContentWithErrorsDTO.wordInformation,
+                    word);
+            generatedContentErrorService.addErrors(correctedContentWithErrorsDTO.sentenceWithErrors, correctedContentWithErrorsDTO.definitionWithErrors);
+        } catch (Exception e) {
+            log.error(e.getMessage());
         }
-        CorrectedContentWithErrorsDTO correctedContentWithErrorsDTO = createCorrectedContentEntities(generatedContentDTO, word);
-        wordService.saveGeneratedContentToWord(
-                correctedContentWithErrorsDTO.sentenceWithErrors.stream().map((s) -> s.sentence).toList(),
-                correctedContentWithErrorsDTO.definitionWithErrors.stream().map((d) -> d.definition).toList(),
-                correctedContentWithErrorsDTO.wordInformation,
-                word);
-        generatedContentErrorService.addErrors(correctedContentWithErrorsDTO.sentenceWithErrors, correctedContentWithErrorsDTO.definitionWithErrors);
     }
 
     private GeneratedContentDTO getGeneratedContent(Word word, AiModel aiModel) {

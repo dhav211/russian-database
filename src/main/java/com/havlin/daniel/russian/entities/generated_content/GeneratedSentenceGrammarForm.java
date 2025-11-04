@@ -25,5 +25,6 @@ public enum GeneratedSentenceGrammarForm {
     SUPERLATIVE,
     COMPARATIVE,
     SHORT,
+    NONE,
     ERROR
 }

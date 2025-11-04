@@ -1,6 +1,7 @@
 package com.havlin.daniel.russian.services.generated_content;
 
 import com.havlin.daniel.russian.entities.dictionary.Word;
+import com.havlin.daniel.russian.entities.dictionary.WordType;
 import com.havlin.daniel.russian.entities.generated_content.*;
 import com.havlin.daniel.russian.repositories.dictionary.WordFormRepository;
 import com.havlin.daniel.russian.utils.GeneratedContentChecker;
@@ -69,7 +70,6 @@ class SentenceGenerator {
                 .map((wordForm -> wordForm.getAccented().toUpperCase()))
                 .toList();
 
-        // TODO lets add these to threads to see if we can speed up the process a little
         for (GeneratedContentService.GeneratedSentenceDTO sentenceSet: sentenceSets) {
             // Here we want to figure out which word form is used in the sentence
             // Split the sentence into a
@@ -90,8 +90,15 @@ class SentenceGenerator {
                 currentSentence.setEnglishTranslation(sentenceSet.englishText);
                 currentSentence.setReadingLevel(readingLevel);
 
+                boolean canHaveGrammarForm =
+                        word.getType() == WordType.VERB || word.getType() == WordType.NOUN ||word.getType() == WordType.ADJECTIVE;
+
                 // These two errors can only happen in the sentence creation so we will leave them here
-                currentSentence.setGrammarFormFromString(sentenceSet.grammarForm);
+                if (canHaveGrammarForm)
+                    currentSentence.setGrammarFormFromString(sentenceSet.grammarForm);
+                else
+                    currentSentence.setGrammarForm(GeneratedSentenceGrammarForm.NONE);
+
                 if (currentSentence.getGrammarForm() == GeneratedSentenceGrammarForm.ERROR)
                     errorMessages.add(new GeneratedContentErrorMessage(GeneratedContentErrorType.MISSING_GRAMMAR_FORM,
                             word + " is missing it's grammar form"));
