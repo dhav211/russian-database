@@ -2,8 +2,10 @@ package com.havlin.daniel.russian.services.user_uploaded_content;
 
 import com.havlin.daniel.russian.entities.user_uploaded_content.Book;
 import com.havlin.daniel.russian.entities.user_uploaded_content.Chapter;
+import com.havlin.daniel.russian.entities.user_uploaded_content.ChapterText;
 import com.havlin.daniel.russian.repositories.user_uploaded_content.BookRepository;
 import com.havlin.daniel.russian.repositories.user_uploaded_content.ChapterRepository;
+import com.havlin.daniel.russian.repositories.user_uploaded_content.ChapterTextRepository;
 import jakarta.transaction.Transactional;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Attribute;
@@ -25,35 +27,53 @@ public class BookService {
     private static final Logger log = LoggerFactory.getLogger(BookService.class);
     final private BookRepository bookRepository;
     final private ChapterRepository chapterRepository;
+    final private ChapterTextRepository chapterTextRepository;
 
-    public BookService(BookRepository bookRepository, ChapterRepository chapterRepository) {
+    public BookService(BookRepository bookRepository, ChapterRepository chapterRepository, ChapterTextRepository chapterTextRepository) {
         this.bookRepository = bookRepository;
         this.chapterRepository = chapterRepository;
+        this.chapterTextRepository = chapterTextRepository;
     }
 
     @Transactional
-    public Book createBook(ZipFile epubFile) {
+    public CreatedBook createBook(ZipFile epubFile) {
         Map<String, String> testBook = processEPUB(epubFile);
         BookDetails details = parseEpubContent(testBook);
-
         Book book = new Book();
-        book.setAuthor(details.author);
-        book.setDescription(details.description);
-        book.setTitle(details.title);
-        bookRepository.save(book);
+        String errorMessage = "";
 
-        for (ChapterDetails chapterDetails : details.chapterDetails) {
-            Chapter chapter = new Chapter();
-            chapter.setBook(book);
-            chapter.setText(chapterDetails.text);
-            chapter.setNumber(chapterDetails.number);
-            chapter.setName(chapterDetails.title);
+        if (!details.hasErrors) {
+            book.setAuthor(details.author);
+            book.setDescription(details.description);
+            book.setTitle(details.title);
+            bookRepository.save(book);
+            Map<Chapter, ChapterText> chapters = new HashMap<>();
 
-            book.getChapters().add(chapter);
-            chapterRepository.save(chapter);
+            for (ChapterDetails chapterDetails : details.chapterDetails) {
+                Chapter chapter = new Chapter();
+                chapter.setBook(book);
+                chapter.setNumber(chapterDetails.number);
+                chapter.setName(chapterDetails.title);
+
+                ChapterText chapterText = new ChapterText();
+                chapterText.setText(chapterDetails.text);
+
+                chapters.put(chapter, chapterText);
+            }
+            book.setChapters(chapters.keySet());
+            chapterRepository.saveAllAndFlush(chapters.keySet());
+
+            // set the chapter texts now that we have the chapter ids
+            for (Map.Entry<Chapter, ChapterText> entry : chapters.entrySet()) {
+                entry.getValue().setChapterId(entry.getKey().getId());
+            }
+
+            chapterTextRepository.saveAll(chapters.values());
+        } else {
+            errorMessage = details.isNotRussian ? "ePUB file language not detected as Russian" : details.errorMessage;
         }
 
-        return book;
+        return new CreatedBook(book, errorMessage);
     }
 
     /**
@@ -99,33 +119,43 @@ public class BookService {
      * @return BookDetails is all the data parsed from the epub ready to created into an entity
      */
     BookDetails parseEpubContent(Map<String, String> content) {
-        ContentPath contentPath = getContentPath(Jsoup.parse(
-                content.get("META-INF/container.xml"), "", org.jsoup.parser.Parser.xmlParser()));
-        Document parsedContent = Jsoup.parse(content.get(contentPath.contentFilePath));
-        BookDetails bookDetails = getBookDetails(parsedContent);
-        List<String> chaptersPaths = setChapterPaths(parsedContent);
-        Document toc = Jsoup.parse(content.get(contentPath.contentFolderPath + getTableOfContentsPath(parsedContent)),
-                "", org.jsoup.parser.Parser.xmlParser());
-        Map<String, ChapterDetails> chapterDetailsMap = getChapterDetails(toc, chaptersPaths);
+        try {
+            ContentPath contentPath = getContentPath(Jsoup.parse(
+                    content.get("META-INF/container.xml"), "", org.jsoup.parser.Parser.xmlParser()));
+            Document parsedContent = Jsoup.parse(content.get(contentPath.contentFilePath));
+            BookDetails bookDetails = getBookDetails(parsedContent);
 
-        for (String path : chaptersPaths) {
-            String chapterContent = content.get(contentPath.contentFolderPath + path);
-            ChapterDetails chapterDetails = chapterDetailsMap.get(path);
-            String chapterText = getChapterText(Jsoup.parse(chapterContent, "", org.jsoup.parser.Parser.xmlParser()));
-
-            if (chapterText.isEmpty()) // let's just skip the cover, which will always be an empty string
-                continue;
-
-            // There is a chance that the chapterDetails will be null, this is the case with author pages, copyright pages, etc
-            if (chapterDetails == null) {
-                chapterDetails = ChapterDetails.NotARealChapter(chapterText);
-            } else {
-                chapterDetails.text = chapterText;
+            if (bookDetails.isNotRussian) { // let's not waste our time with a book that isn't russian
+                bookDetails.hasErrors = true;
+                return bookDetails;
             }
-            bookDetails.chapterDetails.add(chapterDetails);
-        }
 
-        return bookDetails;
+            List<String> chaptersPaths = setChapterPaths(parsedContent);
+            Document toc = Jsoup.parse(content.get(contentPath.contentFolderPath + getTableOfContentsPath(parsedContent)),
+                    "", org.jsoup.parser.Parser.xmlParser());
+            Map<String, ChapterDetails> chapterDetailsMap = getChapterDetails(toc, chaptersPaths);
+
+            for (String path : chaptersPaths) {
+                String chapterContent = content.get(contentPath.contentFolderPath + path);
+                ChapterDetails chapterDetails = chapterDetailsMap.get(path);
+                String chapterText = getChapterText(Jsoup.parse(chapterContent, "", org.jsoup.parser.Parser.xmlParser()));
+
+                if (chapterText.isEmpty()) // let's just skip the cover, which will always be an empty string
+                    continue;
+
+                // There is a chance that the chapterDetails will be null, this is the case with author pages, copyright pages, etc
+                if (chapterDetails == null) {
+                    chapterDetails = ChapterDetails.NotARealChapter(chapterText);
+                } else {
+                    chapterDetails.text = chapterText;
+                }
+                bookDetails.chapterDetails.add(chapterDetails);
+            }
+
+            return bookDetails;
+        } catch (NullPointerException e) {
+            return BookDetails.Error(e.getMessage());
+        }
     }
 
     /**
@@ -297,13 +327,14 @@ public class BookService {
     }
 
     private static class BookDetails {
-        static BookDetails NotFound() {
+        static BookDetails Error(String errorMessage) {
             BookDetails badBook = new BookDetails();
             badBook.author = "";
             badBook.description = "";
             badBook.title = "";
             badBook.isNotRussian = false;
-            badBook.notFound = true;
+            badBook.hasErrors = true;
+            badBook.errorMessage = errorMessage;
             badBook.chapterTexts = new ArrayList<>();
 
             return badBook;
@@ -315,7 +346,8 @@ public class BookService {
         List<String> chapterTexts = new ArrayList<>();
         List<ChapterDetails> chapterDetails = new ArrayList<>();
         boolean isNotRussian;
-        boolean notFound;
+        boolean hasErrors;
+        String errorMessage;
     }
 
     private static class ChapterDetails {

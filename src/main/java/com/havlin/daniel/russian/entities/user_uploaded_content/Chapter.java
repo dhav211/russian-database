@@ -15,10 +15,17 @@ public class Chapter {
     @JoinColumn(name = "book_id", nullable = false)
     private Book book;
 
-    @Lob
-    private String text;
-
     private String name;
+
+    public static Chapter Empty(Book book) {
+        Chapter emptyChapter = new Chapter();
+        emptyChapter.id = 0L;
+        emptyChapter.number = 0;
+        emptyChapter.book = book;
+        emptyChapter.name = "";
+
+        return emptyChapter;
+    }
 
     public Long getId() {
         return id;
@@ -38,14 +45,6 @@ public class Chapter {
 
     public void setBook(Book book) {
         this.book = book;
-    }
-
-    public String getText() {
-        return text;
-    }
-
-    public void setText(String text) {
-        this.text = text;
     }
 
     public String getName() {
