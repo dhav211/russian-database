@@ -9,6 +9,6 @@ So what is this project? Well it's a long thought of project for learning to rea
 - Returning get request of word's forms based, ex: "http://localhost:8080/findClickedWord/привези"
 - Generating sentences, definitions, and other word information with POST request
 
-## Can I help?
+## Can I help? 
 I don't believe I need the help as it is now. This is a personal project for my learning experience. Not only learning Java and Java Spring but also the Russian language.
 However if you want to review my code, offer me suggestions, or have a great idea to make this app better, let me know!
