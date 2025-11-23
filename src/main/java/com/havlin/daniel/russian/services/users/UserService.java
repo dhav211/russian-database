@@ -1,5 +1,6 @@
 package com.havlin.daniel.russian.services.users;
 
+import com.havlin.daniel.russian.entities.users.SecurityUser;
 import com.havlin.daniel.russian.entities.users.User;
 import com.havlin.daniel.russian.entities.users.UserRole;
 import com.havlin.daniel.russian.repositories.users.UserRepository;
@@ -22,7 +23,7 @@ public class UserService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        return userRepository.findByUsername(username);
+        return new SecurityUser(userRepository.findByUsername(username));
     }
 
     public User createUser(String username, String password, String email, UserRole role) {

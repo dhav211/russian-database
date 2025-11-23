@@ -5,12 +5,10 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 @Entity
-public class User implements UserDetails {
+public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -22,34 +20,8 @@ public class User implements UserDetails {
     @Enumerated(value = EnumType.STRING)
     private UserRole role;
 
-    @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        List<String> authorities = new ArrayList<>();
-        switch (this.role) {
-            case ADMIN:
-                authorities.add(UserAuthority.REMOVE_USER.toString());
-            case EDITOR:
-                authorities.add(UserAuthority.ALTER_CONTENT.toString());
-            case BASIC:
-                authorities.addAll(List.of(
-                        UserAuthority.DO_EXERCISE.toString(),
-                        UserAuthority.UPLOAD_BOOK.toString(),
-                        UserAuthority.USE_DICTIONARY.toString()
-                ));
-        }
-
-        return authorities.stream().map(SimpleGrantedAuthority::new).toList();
-    }
-
-    @Override
-    public String getPassword() {
-        return this.password;
-    }
-
-    @Override
-    public String getUsername() {
-        return this.username;
-    }
+    @OneToMany(mappedBy = "user")
+    private final Set<LearnedWord> dictionary = new HashSet<>();
 
     public Long getId() {
         return id;
@@ -61,6 +33,14 @@ public class User implements UserDetails {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public String getPassword() {
+        return password;
     }
 
     public String getEmail() {
@@ -77,5 +57,9 @@ public class User implements UserDetails {
 
     public void setRole(UserRole role) {
         this.role = role;
+    }
+
+    public Set<LearnedWord> getDictionary() {
+        return dictionary;
     }
 }
