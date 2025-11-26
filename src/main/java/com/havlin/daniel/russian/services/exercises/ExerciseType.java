@@ -1,0 +1,14 @@
+package com.havlin.daniel.russian.services.exercises;
+
+public enum ExerciseType {
+    FILL_IN_THE_BLANK,
+    TRANSLATION_MATCH,
+    CASE_ENDING,
+    NOUN_CASE_ENDING_FILL_IN_THE_BLANK,
+    VERB_ENDING,
+    VERB_PAIR_MATCHING,
+    DEFINITION_MATCHING,
+    SPELLING,
+    ADJECTIVE_NOUN_CASE_ENDING,
+    PLACE_STRESS
+}
