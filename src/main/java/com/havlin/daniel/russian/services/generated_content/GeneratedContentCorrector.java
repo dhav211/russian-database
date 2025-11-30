@@ -1,107 +1,213 @@
 package com.havlin.daniel.russian.services.generated_content;
 
-import com.havlin.daniel.russian.repositories.dictionary.WordFormRepository;
+import com.havlin.daniel.russian.services.retrieval.WordRetrievalService;
 import com.havlin.daniel.russian.utils.GeneratedContentChecker;
 import com.havlin.daniel.russian.utils.StressedWordConverter;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
  * Corrects any of the obvious issues with LLM generation, such as latin letters, missing stress, and a built-in stress
- * mark that can't be saved in a database properly. If the correction cannot be made it will log the error for easier
- * human intervention.
+ * mark that can't be saved in a database properly. If the correction cannot be made we can just dispose of the sentence.
  */
 class GeneratedContentCorrector {
-    private final WordFormRepository wordFormRepository;
+    private final WordRetrievalService wordRetrievalService;
 
-    private static final Pattern latinLetterPattern = Pattern.compile(".*[a-zA-Z\\\\p{Punct}].*");
-    private static final Pattern cyrllicStressPattern = Pattern.compile("[а-яёА-ЯЁ]́");
+    private final Pattern latinLetterPattern = Pattern.compile(".*[a-zA-Z\\\\p{Punct}].*");
+    private final Pattern cyrllicStressPattern = Pattern.compile("[а-яёА-ЯЁ]́");
+    private final Pattern punctuationPattern = Pattern.compile("[!”#$%&()*+,./:\"]");
 
-    public GeneratedContentCorrector(WordFormRepository wordFormRepository) {
-        this.wordFormRepository = wordFormRepository;
+    public GeneratedContentCorrector(WordRetrievalService wordRetrievalService) {
+        this.wordRetrievalService = wordRetrievalService;
     }
 
+    /**
+     * Runs all the supplied corrector functions to try to correct the given text, if it needs correcting. The corrector
+     * functions are the functions of this class. If the text is correct or can be correct this method will set the boolean
+     * value to true so we can approve the sentence. There will always be text returns regardless of whether it's correct
+     * or not
+     * @param correctors This is a list of functions that return a CorrectContent object and must supply a string object
+     *                   as a parameter. This locks it into our corrector functions of this class.
+     * @param text The russian text which we will run the correctors on.
+     * @return An object that has a boolean stating whether it's correct or not, and a string object containing the corrected text
+     */
+    CorrectedContent runCorrections(List<Function<String, CorrectedContent>> correctors, String text) {
+        boolean isSentenceAccepted = true;
+        StringBuilder textWithCorrections = new StringBuilder(text);
+        // Run each of the error checking function, applying the changes and adding the errors to the list
+        for (Function<String, CorrectedContent> correction : correctors) {
+            CorrectedContent correctedContent = correction.apply(textWithCorrections.toString());
+            // If there were errors that could be corrected we will accept the sentence, if not then just reject the sentence
+            if (correctedContent.isCorrected()) {
+                textWithCorrections.replace(0, textWithCorrections.length(), correctedContent.correctedText());
+            } else {
+                isSentenceAccepted = false;
+                break;
+            }
+        }
+
+        return new CorrectedContent(isSentenceAccepted, textWithCorrections.toString());
+    }
+
+    /**
+     * Checks a russian text for words that may be missing stress marks. If a word with miss stress marks cannot be fixed
+     * the algorithm will just throw the sentence out.
+     * @param text The russian text to be check for missing stress
+     * @return A corrected text and a boolean that states whether it was successfully corrected
+     */
     CorrectedContent correctMissingStressMark(String text) {
-        List<GeneratedContentErrorMessage> errors = new ArrayList<>();
         List<String> wordsMissingStress = findWordsWithMissingStress(text);
         if (!wordsMissingStress.isEmpty()) {
             StressLetterCorrections stressLetterCorrections = getUnstressedCorrections(wordsMissingStress);
             text = addStressToWords(stressLetterCorrections, text);
 
             if (!stressLetterCorrections.canBeCompletelyCorrected()) {
-                stressLetterCorrections.uncorrectable.forEach((uncorrectable) -> {
-                    errors.add(new GeneratedContentErrorMessage(GeneratedContentErrorType.MISSING_STRESS_MARK,
-                            uncorrectable + " is missing a stress mark"));
-                });
+                for (String _ : stressLetterCorrections.uncorrectable) {
+                    return new CorrectedContent(false, "");
+                }
             }
         }
 
-        return new CorrectedContent(errors, text);
+        return new CorrectedContent(true, text);
     }
 
+    /**
+     * The LLM will occasionally use a latin letter instead of a cyclic letter, this will replace any of the findings.
+     * If a fix cannot be made the sentence will be rejected.
+     * @param text The russian text which will be checked for latin letters.
+     * @return A corrected text and a boolean that states whether it was successfully corrected
+     */
     CorrectedContent correctLatinLettersUsedAsCyrillic(String text) {
-        List<GeneratedContentErrorMessage> errors = new ArrayList<>();
         if (GeneratedContentChecker.doesSentenceContainLatinLetters(text))
         {
             List<String> wordsWithLatinLetters = findWordsWithLatinLetters(text);
             text = replaceEnglishCharacters(text);
 
-            wordsWithLatinLetters.forEach((wordWithLatinLetters) -> {
-                if (!wordFormRepository.existsByAccented(wordWithLatinLetters)) { // even after being fixed the word still does not exist
-                    errors.add(new GeneratedContentErrorMessage(GeneratedContentErrorType.LATIN_LETTERS,
-                            "Latin letters were found in the word " + wordWithLatinLetters + " and it couldn't be corrected."));
+            for(String wordWithLatinLetters : wordsWithLatinLetters) {
+                if (!wordRetrievalService.doesWordFormExistByAccented(wordWithLatinLetters)) { // even after being fixed the word still does not exist
+                    return new CorrectedContent(false, "");
                 }
-            });
+            }
         }
 
-        return new CorrectedContent(errors, text);
+        return new CorrectedContent(true, text);
     }
 
+    /**
+     * The database cannot read built in stress marks, so we can replace the built-in own with a mark that comes after the
+     * stressed letter.
+     * @param text The russian text which will be checked for built-in stress marks.
+     * @return A corrected text and a boolean that states whether it was successfully corrected
+     */
     CorrectedContent correctBuiltinStressMarks(String text) {
-        List<GeneratedContentErrorMessage> errors = new ArrayList<>();
-
         if (GeneratedContentChecker.doesSentenceContainLettersWithBuiltinStressMarks(text)) {
             List<String> stressedWords = findWordsWithBuiltinStressedLetter(text);
             text = replaceStressedLetters(text);
 
-            stressedWords.forEach((stressedWord) -> {
-                if (!wordFormRepository.existsByAccented(replaceStressedLetters(stressedWord))) { // even after being fixed the word still does not exist
-                    List<String> forms = wordFormRepository.findAccentedByBare(stressedWord.replace("'", ""));
-                    boolean isNewStressFound = false;
+            for (String stressedWord : stressedWords) {
+                if (!wordRetrievalService.doesWordFormExistByAccented(replaceStressedLetters(stressedWord))) { // even after being fixed the word still does not exist
+                    List<String> forms = wordRetrievalService.findAllAccentedWordFormsByBare(stressedWord.replace("'", ""));
                     if (!forms.isEmpty()) {
                         boolean doAllFormsHaveSameAccented = forms.stream()
                                 .allMatch((form) -> Objects.equals(form, forms.getFirst()));
 
-                        if (doAllFormsHaveSameAccented) {
-                            isNewStressFound = true;
-                            stressedWord = forms.getFirst();
+                        if (!doAllFormsHaveSameAccented) {
+                            return new CorrectedContent(false, "");
                         }
                     }
-                    if (!isNewStressFound) {
-                        errors.add(new GeneratedContentErrorMessage(GeneratedContentErrorType.STRESS_MARK_ON_LETTER,
-                                "There was a stress mark above a letter in the word " + stressedWord + " and it couldn't be corrected."));
-                    }
                 }
-            });
+            }
         }
 
-        return new CorrectedContent(errors, text);
+        return new CorrectedContent(true, text);
     }
 
+    /**
+     * Will remove stress marks from words with single vowels, these stress marks are redundant and cause trouble searching
+     * the database.
+     * @param text The russian text that will be searched for single vowel stresses.
+     * @return A corrected text and a boolean that states whether it was successfully corrected
+     */
     CorrectedContent correctSingleVowelStresses(String text) {
-        return new CorrectedContent(new ArrayList<>(), Arrays.stream(text.split(" ")).map((word) -> {
-            if (getNumberOfVowels(word) == 1 && word.contains("'")) {
-                StringBuilder corrected = new StringBuilder(word);
-                int stressIndex = word.indexOf('\'');
+        String[] split = text.split(" ");
+        for (int i = 0; i < split.length; i++) {
+            if (getNumberOfVowels(split[i]) == 1 && split[i].contains("'")) {
+                StringBuilder corrected = new StringBuilder(split[i]);
+                int stressIndex = split[i].indexOf('\'');
                 corrected.deleteCharAt(stressIndex);
-                return corrected.toString();
-            } else {
-                return word;
+                split[i] = corrected.toString();
             }
-        }).collect(Collectors.joining(" ")));
+        }
+
+        return new CorrectedContent(true, String.join(" ", split));
+    }
+
+    /**
+     * Checks an entire text word by word for an incorrect stress. Will always return a corrected text regardless of
+     * whether anything was corrected or not, we cannot not be entirely sure because we don't have every word in the database.
+     * @param text A sentence of russian text that will be checked for a stress mark in the wrong place.
+     * @return The correct content object returned will always state that the text has been corrected.
+     */
+    CorrectedContent correctStressInWrongPlace(String text) {
+        StringBuilder correctedStress = new StringBuilder();
+        String[] splitText = text.split(" ");
+
+        for (int i = 0; i < splitText.length; i++) {
+            Matcher matcher = punctuationPattern.matcher(splitText[i]);
+            String removedPunctuationWord = matcher.replaceAll("").toLowerCase();
+
+            // Check to see if the accented word exists in the database, if it doesn't let's move forward with the algorithm
+            if (!wordRetrievalService.doesWordFormExistByAccented(removedPunctuationWord)) {
+                String removedStress = removedPunctuationWord.replace("'", "");
+                splitText[i] = findCorrectStress(removedStress);
+            }
+        }
+
+        // Reassemble the sentence with the string builder object
+        for (int i = 0; i < splitText.length; i++) {
+            correctedStress.append(splitText[i]);
+
+            if (i < splitText.length - 1)
+                correctedStress.append(" ");
+        }
+
+        return new CorrectedContent(true, correctedStress.toString());
+    }
+
+    /**
+     * Attempt to correct the stress of a single word. This method assumes that the given word has no punctuation and has
+     * not been found in the database. It will remove
+     * @param word A string object for a single word that has stress in the wrong place
+     * @return A corrected string with the stress changed or an empty string if no alternative was found
+     */
+    String correctStressInWrongPlaceForSingleWord(String word) {
+        if (word.split(" ").length > 1) // exit the function if we have more than one word
+            return "";
+
+        String newStressWord = findCorrectStress(word.replace("'", ""));
+
+        return newStressWord.contains("'") ? newStressWord : "";
+    }
+
+    private String findCorrectStress(String word) {
+        // Check to see if the accentless word exists in the database
+        List<String> uniqueAccented = wordRetrievalService.findAllWordFormsWithUniqueWordByBare(word);
+        StringBuilder updateStress = new StringBuilder(word);
+
+        // If there is a only 1 match we can be positive this is the one we are looking for
+        if (uniqueAccented.size() == 1) {
+            // We will need to find the position of the accent mark, then we will apply it the word in the split text
+            int stressPosition = uniqueAccented.getFirst().indexOf("'");
+            if (stressPosition > 0) {
+                updateStress.insert(stressPosition, "'");
+            }
+        }
+
+        return updateStress.toString();
     }
 
     private String replaceEnglishCharacters(String russianText) {
@@ -168,7 +274,7 @@ class GeneratedContentCorrector {
         StressLetterCorrections stressLetterCorrections = new StressLetterCorrections();
 
         unstressedWords.forEach((word) -> {
-            List<String> forms = wordFormRepository.findAccentedByBare(word);
+            List<String> forms = wordRetrievalService.findAllAccentedWordFormsByBare(word);
 
             if (!forms.isEmpty()) { // Unlikely to happen, but will prevent an out-of-bounds error
                 boolean doAllFormsHaveSameAccented = forms.stream()
@@ -243,7 +349,8 @@ class GeneratedContentCorrector {
      */
     List<String> findWordsWithMissingStress(String text) {
         // this creates a list of words that don't have a ', which indicates it's missing stress
-        List<String> stresslessWords = Arrays.stream(text.replaceAll("[!”#$%&()*+,./:]","").split(" "))
+        Matcher matcher = punctuationPattern.matcher(text);
+        List<String> stresslessWords = Arrays.stream(matcher.replaceAll("").split(" "))
                 .filter((word) -> !word.contains("'")) // add any words that do not have an apostrophe
                 .filter((word) -> !word.equals("—")) // make sure we don't have an em dash in there
                 .collect(Collectors.toList());
@@ -286,7 +393,7 @@ class GeneratedContentCorrector {
      * @return List of all words that have a builtin stress mark.
      */
     private List<String> findWordsWithBuiltinStressedLetter(String text) {
-        return Arrays.stream(splitWordsAndRemovePunc(text))
+        return Arrays.stream(splitWordsAndRemovePunctuation(text))
                 .filter((word) -> {
                     Matcher matcher = cyrllicStressPattern.matcher(word);
                     return matcher.find();
@@ -300,15 +407,16 @@ class GeneratedContentCorrector {
      * @return List of all words that have latin letters.
      */
     private List<String> findWordsWithLatinLetters(String text) {
-        return Arrays.stream(splitWordsAndRemovePunc(text))
+        return Arrays.stream(splitWordsAndRemovePunctuation(text))
                 .filter((word) -> {
                     Matcher matcher = latinLetterPattern.matcher(word);
                     return matcher.find();
                 }).toList();
     }
 
-    private String[] splitWordsAndRemovePunc(String text) {
-        return text.replaceAll("[!”#$%&()*+,./:]","").split(" ");
+    private String[] splitWordsAndRemovePunctuation(String text) {
+        Matcher matcher = punctuationPattern.matcher(text);
+        return matcher.replaceAll("").split(" ");
     }
 
     /**

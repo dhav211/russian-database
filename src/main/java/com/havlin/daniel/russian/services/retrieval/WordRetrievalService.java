@@ -9,7 +9,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 public class WordRetrievalService {
@@ -30,6 +29,39 @@ public class WordRetrievalService {
         } catch (Exception e) {
             return WordType.ERROR;
         }
+    }
+
+    public List<String> findAllWordFormsWithUniqueWordByBare(String bare) {
+        Map<Long, String> wordFormsWithUniqueWords = new HashMap<>();
+        for (WordForm wf : wordFormRepository.findAllByBare(bare)) {
+            if (!wordFormsWithUniqueWords.containsKey(wf.getWord().getId())) {
+                wordFormsWithUniqueWords.put(wf.getWord().getId(), wf.getAccented());
+            }
+        }
+
+        if (wordFormsWithUniqueWords.isEmpty()) {
+            List<Word> words = wordRepository.findAllByBare(bare);
+            if (words.size() == 1) {
+                wordFormsWithUniqueWords.put(words.getFirst().getId(), words.getFirst().getAccented());
+            }
+        }
+        return wordFormsWithUniqueWords.values().stream().toList();
+    }
+
+    public boolean doesWordFormExistByAccented(String accented) {
+        return wordFormRepository.existsByAccented(accented) || wordRepository.existsByAccented(accented);
+    }
+
+    public List<String> findAllAccentedWordFormsByBare(String bare) {
+        return wordFormRepository.findAccentedByBare(bare);
+    }
+
+    public Set<Word> findAllWordsByAccentedForSentenceCreation(String accented) {
+        Set<Word> foundWords = new HashSet<>(wordFormRepository.findWordByAccentedForSentenceCreation(accented));
+        if (foundWords.isEmpty())
+            foundWords.addAll(wordRepository.findWordsByAccentedForContentCreation(accented));
+
+        return foundWords;
     }
 
     /**
@@ -59,18 +91,26 @@ public class WordRetrievalService {
     }
 
     public Optional<Word> getWordByAccentedTextForSentenceCreation(String accentedText) {
-        return wordRepository.findWordByAccentedForContentCreation(accentedText);
+        return Optional.of(wordRepository.findWordsByAccentedForContentCreation(accentedText).getFirst());
+    }
+
+    public Optional<Word> getWordByIdForSentenceCreation(Long id) {
+        return wordRepository.findWordByIdForContentCreation(id);
     }
 
     private Set<Word> sortWordsFromWordFormsById(List<WordForm> wordForms) {
-        Set<Word> words = new TreeSet<>(Comparator.comparing(Word::getId));
+        try {
+            Set<Word> words = new TreeSet<>(Comparator.comparing(Word::getId));
 
-        // Add each word form to the set, the set will only keep unique values and will sort by id
-        for (WordForm wordForm : wordForms) {
-            words.add(wordForm.getWord());
+            // Add each word form to the set, the set will only keep unique values and will sort by id
+            for (WordForm wordForm : wordForms) {
+                words.add(wordForm.getWord());
+            }
+
+            return words;
+        } catch (NullPointerException e) {
+            return new HashSet<>();
         }
-
-        return words;
     }
 
     public WordRetrievalDTO fetchWordById(Long id) {

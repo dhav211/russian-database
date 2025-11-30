@@ -12,6 +12,7 @@ import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Set;
 
 @Service
 public class WordService {
@@ -29,11 +30,11 @@ public class WordService {
     }
 
     @Transactional
-    public void saveGeneratedContentToWord(List<Sentence> sentences, List<Definition> definitions,
-                                           WordInformation wordInformation, Word word) {
+    public void saveGeneratedContentToWord(Set<Sentence> sentences, Set<Definition> definitions,
+                                           WordInformation wordInformation, Set<Word> words) {
         sentenceRepository.saveAll(sentences);
         definitionRepository.saveAll(definitions);
         wordInformationRepository.save(wordInformation);
-        wordRepository.saveAndFlush(word); // We need to get the IDs generated for the sentences and definitions, so flush it
+        wordRepository.saveAllAndFlush(words); // We need to get the IDs generated for the sentences and definitions, so flush it
     }
 }

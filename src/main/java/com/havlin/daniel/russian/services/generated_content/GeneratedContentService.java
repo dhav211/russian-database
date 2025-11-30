@@ -3,13 +3,8 @@ package com.havlin.daniel.russian.services.generated_content;
 import com.havlin.daniel.russian.entities.dictionary.Word;
 import com.havlin.daniel.russian.entities.generated_content.*;
 import com.havlin.daniel.russian.repositories.dictionary.WordFormRepository;
-import com.havlin.daniel.russian.repositories.dictionary.WordRepository;
-import com.havlin.daniel.russian.repositories.generated_content.DefinitionRepository;
-import com.havlin.daniel.russian.repositories.generated_content.GeneratedContentErrorRepository;
-import com.havlin.daniel.russian.repositories.generated_content.SentenceRepository;
-import com.havlin.daniel.russian.repositories.generated_content.WordInformationRepository;
 import com.havlin.daniel.russian.services.dictionary.WordService;
-import jakarta.transaction.Transactional;
+import com.havlin.daniel.russian.services.retrieval.WordRetrievalService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -29,16 +24,17 @@ public class GeneratedContentService {
     private final SentenceGenerator sentenceGenerator;
     private final DefinitionGenerator definitionGenerator;
     private final WordService wordService;
-    private final GeneratedContentErrorService generatedContentErrorService;
+    private final WordRetrievalService wordRetrievalService;
 
     public GeneratedContentService(WordFormRepository wordFormRepository,
                                    GeneratedContentErrorService generatedContentErrorService,
-                                   WordService wordService
+                                   WordService wordService,
+                                   WordRetrievalService wordRetrievalService
                                    ) {
         this.promptGenerator = new PromptGenerator(wordFormRepository);
-        this.generatedContentErrorService = generatedContentErrorService;
-        this.sentenceGenerator = new SentenceGenerator(wordFormRepository, generatedContentErrorService);
-        this.definitionGenerator = new DefinitionGenerator(wordFormRepository, generatedContentErrorService);
+        this.wordRetrievalService = wordRetrievalService;
+        this.sentenceGenerator = new SentenceGenerator(wordRetrievalService);
+        this.definitionGenerator = new DefinitionGenerator(wordRetrievalService);
         this.wordService = wordService;
     }
 
@@ -56,26 +52,31 @@ public class GeneratedContentService {
                 return;
             }
 
-            GeneratedContentDTO generatedContentDTO = getGeneratedContent(word, aiModel);
+            InstantiatedGeneratedContentDTO generatedContentDTO = getGeneratedContent(word, aiModel);
 
             if (generatedContentDTO.hasError) { // There was an error in calling the API, exit from the function
                 return;
             }
-            CorrectedContentWithErrorsDTO correctedContentWithErrorsDTO = createCorrectedContentEntities(generatedContentDTO, word);
+            ApprovedGeneratedContent approvedContent = createCorrectedContentEntities(generatedContentDTO, word);
             wordService.saveGeneratedContentToWord(
-                    correctedContentWithErrorsDTO.sentenceWithErrors.stream().map((s) -> s.sentence).toList(),
-                    correctedContentWithErrorsDTO.definitionWithErrors.stream().map((d) -> d.definition).toList(),
-                    correctedContentWithErrorsDTO.wordInformation,
-                    word);
-            generatedContentErrorService.addErrors(correctedContentWithErrorsDTO.sentenceWithErrors, correctedContentWithErrorsDTO.definitionWithErrors);
+                    approvedContent.sentences(),
+                    approvedContent.definitions(),
+                    approvedContent.wordInformation(),
+                    approvedContent.words());
         } catch (Exception e) {
             log.error(e.getMessage());
         }
     }
 
-    private GeneratedContentDTO getGeneratedContent(Word word, AiModel aiModel) {
-        int numberOfThreads = 8;
-        GeneratedContentDTO generatedContentDTO = new GeneratedContentDTO();
+    /**
+     * Call the LLM and get all the data for the requested word.
+     * @param word The word we want to generate content for
+     * @param aiModel The ai model we will use, either Gemini or Claude.
+     * @return All the generated content in string form which will later be corrected and turned into entities
+     */
+    private InstantiatedGeneratedContentDTO getGeneratedContent(Word word, AiModel aiModel) {
+        int numberOfThreads = 7;
+        InstantiatedGeneratedContentDTO generatedContentDTO = new InstantiatedGeneratedContentDTO();
 
         try(ExecutorService executor = Executors.newFixedThreadPool(numberOfThreads)) {
 
@@ -105,7 +106,7 @@ public class GeneratedContentService {
 
             // We are keeping the sentence futures in a map so we can keep track of the reading level
             Map<ReadingLevel, Future<String>> uneditedGeneratedSentenceFutures = new HashMap<>();
-            for (ReadingLevel readingLevel : ReadingLevel.values()) {
+            for (ReadingLevel readingLevel : new ReadingLevel[]{ReadingLevel.BEGINNER, ReadingLevel.INTERMEDIATE}) {
                 LLMContentGenerator sentenceGenerator = aiModel == AiModel.CLAUDE ?
                         new ClaudeContentGenerator(claudeKey, latch, promptGenerator.buildPromptForSentenceGeneration(word, readingLevel)) :
                         new GeminiContentGenerator(latch, promptGenerator.buildPromptForSentenceGeneration(word, readingLevel));
@@ -135,14 +136,23 @@ public class GeneratedContentService {
         return generatedContentDTO;
     }
 
-    CorrectedContentWithErrorsDTO createCorrectedContentEntities(GeneratedContentDTO generatedContentDTO, Word word) {
-        List<SentenceWithErrors> sentences = new ArrayList<>();
+    /**
+     * We will take the string values given from the LLM, parse and correct them, finally turning them into entities
+     * that can be saved into the database.
+     * @param generatedContentDTO A POJO holds all the uncorrected string values given by the LLM
+     * @param word The word that all the content is based upon
+     * @return All the corrected entities ready to be saved to the database
+     */
+    ApprovedGeneratedContent createCorrectedContentEntities(InstantiatedGeneratedContentDTO generatedContentDTO, Word word) {
+        Set<Sentence> sentences = new HashSet<>();
+        // This will be passed into sentence generator method as a reference and continually added to
+        Map<Long, Word> wordsToSave = new HashMap<>();
 
         for (Map.Entry<ReadingLevel, String> entry : generatedContentDTO.sentences.entrySet()) {
-            sentences.addAll(sentenceGenerator.createSentenceListFromGeneratedSentences(entry.getValue(), word, entry.getKey()));
+            sentences.addAll(sentenceGenerator.createSentenceListFromGeneratedSentences(entry.getValue(), wordsToSave, entry.getKey(), word));
         }
 
-        List<DefinitionWithErrors> definitions = definitionGenerator.createShortDefinitions(generatedContentDTO.definitions, word);
+        Set<Definition> definitions = definitionGenerator.createShortDefinitions(generatedContentDTO.definitions, word);
         WordInformation wordInformation = definitionGenerator
                 .createWordInformation(
                         generatedContentDTO.wordInformation.definition,
@@ -150,28 +160,14 @@ public class GeneratedContentService {
                         generatedContentDTO.wordInformation.usageContext,
                         generatedContentDTO.wordInformation.formation,
                         word);
+        Set<Word> words = new HashSet<>(wordsToSave.values());
 
-        return new CorrectedContentWithErrorsDTO(sentences, definitions, wordInformation);
+        return new ApprovedGeneratedContent(sentences, definitions, wordInformation, words);
     }
 
     static class GeneratedSentenceDTO {
         String russianText;
         String englishText;
-        String grammarForm;
-    }
-
-    static class CorrectedContentWithErrorsDTO {
-        public CorrectedContentWithErrorsDTO(List<SentenceWithErrors> sentenceWithErrors,
-                                             List<DefinitionWithErrors> definitionWithErrors,
-                                             WordInformation wordInformation) {
-            this.sentenceWithErrors = sentenceWithErrors;
-            this.definitionWithErrors = definitionWithErrors;
-            this.wordInformation = wordInformation;
-        }
-
-        List<SentenceWithErrors> sentenceWithErrors;
-        List<DefinitionWithErrors> definitionWithErrors;
-        WordInformation wordInformation;
     }
 
     private static class WordInformationFutureHolder {
@@ -188,23 +184,4 @@ public class GeneratedContentService {
         String formation;
     }
 
-    static class SentenceWithErrors {
-        SentenceWithErrors(Sentence sentence, List<GeneratedContentError> errors) {
-            this.sentence = sentence;
-            this.errors = errors;
-        }
-
-        Sentence sentence;
-        List<GeneratedContentError> errors;
-    }
-
-    static class DefinitionWithErrors {
-        DefinitionWithErrors(Definition definition, List<GeneratedContentError> errors) {
-            this.definition = definition;
-            this.errors = errors;
-        }
-
-        Definition definition;
-        List<GeneratedContentError> errors;
-    }
 }

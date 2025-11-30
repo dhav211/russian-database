@@ -6,19 +6,20 @@ import com.havlin.daniel.russian.entities.generated_content.GeneratedContentErro
 import com.havlin.daniel.russian.entities.generated_content.GeneratedContentStatus;
 import com.havlin.daniel.russian.entities.generated_content.WordInformation;
 import com.havlin.daniel.russian.repositories.dictionary.WordFormRepository;
+import com.havlin.daniel.russian.services.retrieval.WordRetrievalService;
 import com.havlin.daniel.russian.utils.GeneratedContentChecker;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
 
 public class DefinitionGenerator {
     private final GeneratedContentCorrector generatedContentCorrector;
-    private final GeneratedContentErrorService generatedContentErrorService;
 
-    public DefinitionGenerator(WordFormRepository wordFormRepository, GeneratedContentErrorService generatedContentErrorService) {
-        this.generatedContentCorrector = new GeneratedContentCorrector(wordFormRepository);
-        this.generatedContentErrorService = generatedContentErrorService;
+    public DefinitionGenerator(WordRetrievalService wordRetrievalService) {
+        this.generatedContentCorrector = new GeneratedContentCorrector(wordRetrievalService);
     }
 
     /**
@@ -27,52 +28,36 @@ public class DefinitionGenerator {
      * to be saved to the repository.
      * @param definitionText A set of one-sentence definitions created by an LLM, will be converted to definition objects.
      * @param word The word that the definitions are trying to describe.
-     * @return A list of definition objects that have been corrected but still may contain errors, the list of errors are
-     * included with the returning object
+     * @return A list of definition objects that have been corrected.
      */
-    List<GeneratedContentService.DefinitionWithErrors> createShortDefinitions(String definitionText, Word word) {
-        return definitionText.lines()
-                // remove any lines that have too many latin letters or empty lines
-                .filter((line) -> !GeneratedContentChecker.isOverLatinLetterThreshold(line, 0.5) && !line.isEmpty())
-                .map((line) -> {
-            Definition definition = new Definition();
-            List<GeneratedContentErrorMessage> errorMessages = new ArrayList<>();
+    Set<Definition> createShortDefinitions(String definitionText, Word word) {
+        Set<Definition> approvedDefinitions = new HashSet<>();
+        // Break down the definition text into individual lines,
+        List<String> lines = definitionText.lines()
+                // remove any lines that have any latin letters or empty lines
+                .filter((line) -> !GeneratedContentChecker.isOverLatinLetterThreshold(line, 0.0) && !line.isEmpty())
+                .toList();
 
-            List<Function<String, CorrectedContent>> correctors = List.of(
+        // Run the correctors to see if we can fix any obvious problems
+        for (String line : lines) {
+            CorrectedContent correctedContent = generatedContentCorrector.runCorrections(List.of(
                     generatedContentCorrector::correctBuiltinStressMarks,
                     generatedContentCorrector::correctLatinLettersUsedAsCyrillic,
                     generatedContentCorrector::correctMissingStressMark,
-                    generatedContentCorrector::correctSingleVowelStresses
-            );
+                    generatedContentCorrector::correctSingleVowelStresses,
+                    generatedContentCorrector::correctStressInWrongPlace
+            ), line);
 
-            for (Function<String, CorrectedContent> correction : correctors) {
-                CorrectedContent correctedContent = correction.apply(line);
-                errorMessages.addAll(correctedContent.errors());
-                line = correctedContent.correctedText();
+            // We will only add the definition if we haven't found any mistakes or fixed the mistakes
+            if (correctedContent.isCorrected()) {
+                Definition definition = new Definition();
+                definition.setText(correctedContent.correctedText());
+                definition.setWord(word);
+                word.getDefinitions().add(definition);
+                approvedDefinitions.add(definition);
             }
-
-            definition.setText(line);
-            definition.setWord(word);
-            word.getDefinitions().add(definition);
-
-            // Convert the error messages to Error entities which will be later saved to the database
-            // We cannot save them now, as we need the sentence ID which won't exist until the db is flushed
-            List<GeneratedContentError> errors = errorMessages.stream()
-                    .map((message) -> generatedContentErrorService.createError(
-                            GeneratedContentErrorOrigin.DEFINITION,
-                            message.errorType(),
-                            message.message(),
-                            definition.getText()
-                    )).toList();
-
-            // If any errorMessages are found we need to correct them by hand before the user can see them.
-            if (!errorMessages.isEmpty())
-                definition.setStatus(GeneratedContentStatus.NEEDS_APPROVAL);
-            else
-                definition.setStatus(GeneratedContentStatus.APPROVED);
-
-            return new GeneratedContentService.DefinitionWithErrors(definition, errors);
-        }).toList();
+        }
+        return approvedDefinitions;
     }
 
 

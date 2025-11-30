@@ -85,11 +85,15 @@ public class DictionaryTests {
         Set<Word> words1 = wordRetrievalService.getWordsFromAccentedText("водяны'х");
         Set<Word> words2 = wordRetrievalService.getWordsFromAccentedText("просро'ченных");
         Set<Word> words3 = wordRetrievalService.getWordsFromAccentedText("чёртовые");
+        Set<Word> word4 = wordRetrievalService.getWordsFromAccentedText("сосе'д");
+        Set<Word> word5 = wordRetrievalService.findAllWordsByAccentedForSentenceCreation("всегда'");
 
         Assertions.assertAll(
                 () -> Assertions.assertEquals(2, words1.size()),
                 () -> Assertions.assertEquals(1, words2.size()),
-                () -> Assertions.assertEquals(1, words3.size())
+                () -> Assertions.assertEquals(1, words3.size()),
+                () -> Assertions.assertEquals(1, word4.size()),
+                () -> Assertions.assertEquals(1, word5.size())
         );
     }
 }

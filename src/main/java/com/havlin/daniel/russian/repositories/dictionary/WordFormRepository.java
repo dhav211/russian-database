@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 public interface WordFormRepository extends JpaRepository<WordForm, Long> {
@@ -23,6 +24,15 @@ public interface WordFormRepository extends JpaRepository<WordForm, Long> {
             "LEFT JOIN FETCH wf.word.translations " +
             "WHERE wf.bare = :bareText")
     Set<Word> findAllMatchWordsByBareWordForm(@Param("bareText") String bareText);
+
+    @Query("SELECT wf FROM WordForm wf WHERE wf.bare = :bareText GROUP BY wf.word")
+    List<WordForm> findAllWordFormsWithUniqueWordByBare(@Param("bareText") String bareText);
+
+    @Query("SELECT wf.word FROM WordForm wf " +
+            "LEFT JOIN FETCH wf.word.definitions " +
+            "LEFT JOIN FETCH wf.word.containingSentences " +
+            "WHERE wf.accented = :accented")
+    List<Word> findWordByAccentedForSentenceCreation(@Param("accented") String word);
 
     boolean existsByAccented(String accented);
 }

@@ -10,9 +10,9 @@ import com.havlin.daniel.russian.repositories.generated_content.GeneratedContent
 import com.havlin.daniel.russian.repositories.generated_content.SentenceRepository;
 import com.havlin.daniel.russian.repositories.generated_content.WordInformationRepository;
 import com.havlin.daniel.russian.services.dictionary.WordService;
+import com.havlin.daniel.russian.services.retrieval.WordRetrievalService;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
-import org.checkerframework.checker.units.qual.A;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +20,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 @SpringBootTest
 public class GeneratedContentTest {
@@ -50,539 +52,579 @@ public class GeneratedContentTest {
     @Autowired
     private WordInformationRepository wordInformationRepository;
 
+    @Autowired
+    private WordRetrievalService wordRetrievalService;
+
     @Test
     @Transactional
     public void saveGeneratedContentToDB() {
-        String definitions = "Продолжа'ть быть в како'м-ли'бо ме'сте и'ли состоя'нии.\n" +
-                "Быть прису'тствующим по'сле того', как что'-то друго'е ушло' и'ли бы'ло забра'но.\n" +
-                "Сохраня'ть своё' положе'ние и'ли состоя'ние в тече'ние како'го-ли'бо вре'мени.";
+        String beginnerSentences = "Мы ча'сто говори'м о хоро'ших кни'гах.\n" +
+                "We often talk about good books.\n" +
+                "В э'том го'роде мно'го хоро'ших люде'й.\n" +
+                "There are many good people in this city.\n" +
+                "Я мечта'ю о хоро'ших путеше'ствиях по ми'ру.\n" +
+                "I dream about good travels around the world.\n" +
+                "\n" +
+                "Де'ти игра'ют хоро'шими игру'шками во дворе'.\n" +
+                "Children play with good toys in the yard.\n" +
+                "С хоро'шими друзья'ми все'гда ве'село проводи'ть вре'мя.\n" +
+                "It's always fun to spend time with good friends.\n" +
+                "Он помога'ет други'м хоро'шими сове'тами и де'йствиями.\n" +
+                "He helps others with good advice and actions.\n" +
+                "\n" +
+                "Мы ви'дели хоро'шие фи'льмы в кинотеа'тре вче'ра.\n" +
+                "We saw good films at the cinema yesterday.\n" +
+                "Купи'те, пожа'луйста, хоро'шие я'блоки для пирога'.\n" +
+                "Please buy good apples for the pie.\n" +
+                "Студе'нты чита'ют хоро'шие кни'ги в библиоте'ке.\n" +
+                "Students read good books in the library.\n" +
+                "\n" +
+                "Я пригласи'л на ве'черинку хоро'ших друзе'й из университе'та.\n" +
+                "I invited good friends from the university to the party.\n" +
+                "Она' зна'ет мно'гих хоро'ших специали'стов в свое'й о'бласти.\n" +
+                "She knows many good specialists in her field.\n" +
+                "Мы ча'сто встреча'ем хоро'ших люде'й в э'том ма'леньком го'роде.\n" +
+                "We often meet good people in this small town.\n" +
+                "\n" +
+                "Он все'гда ра'д хоро'шим новостя'м с рабо'ты.\n" +
+                "He is always happy about good news from work.\n" +
+                "Я жела'ю хоро'шим студе'нтам успе'ха на экза'менах.\n" +
+                "I wish good students success in their exams.\n" +
+                "Спаси'бо хоро'шим сосе'дям за по'мощь с переез'дом.\n" +
+                "Thanks to good neighbors for help with the move.\n" +
+                "\n" +
+                "У нас нет хоро'ших пла'нов на за'втра'шний день.\n" +
+                "We don't have good plans for tomorrow.\n" +
+                "Я скуча'ю по хоро'ших дням, когда' мы бы'ли вме'сте.\n" +
+                "I miss the good old days when we were together.\n" +
+                "Э'то исто'рия о хоро'ших дела'х, кото'рые измени'ли мир.\n" +
+                "This is a story about good deeds that changed the world.\n" +
+                "\n" +
+                "Хоро'шие друзья' все'гда подде'рживают друг дру'га в тру'дные моме'нты.\n" +
+                "Good friends always support each other in difficult moments.\n" +
+                "Хоро'шие о'тзывы о продук'те ва'жны для прода'ж.\n" +
+                "Good reviews about a product are important for sales.\n" +
+                "Э'ти хоро'шие кроссо'вки о'чень удо'бные для бе'га.\n" +
+                "These good sneakers are very comfortable for running.\n" +
+                "\n" +
+                "О'н расска'зывал мне о хоро'шем рестора'не в це'нтре го'рода.\n" +
+                "He was telling me about a good restaurant in the city center.\n" +
+                "Я ду'мал о хоро'шем сове'те, кото'рый ты мне дал.\n" +
+                "I was thinking about the good advice you gave me.\n" +
+                "В хоро'шем до'ме всегда' те'пло и уют'но зи'мними вечера'ми.\n" +
+                "In a good home it's always warm and cozy on winter evenings.\n" +
+                "\n" +
+                "С хоро'шим ножо'м ле'гко ре'зать хлеб и овощи'.\n" +
+                "It's easy to cut bread and vegetables with a good knife.\n" +
+                "Э'тот сту'л сде'лан хоро'шим мастеро'м из де'рева.\n" +
+                "This chair was made by a good master from wood.\n" +
+                "С хоро'шим компью'тером рабо'та идёт быстре'е и эффе'ктивнее.\n" +
+                "Work goes faster and more efficiently with a good computer.\n" +
+                "\n" +
+                "Мы купи'ли хоро'шее вино' для пра'здничного стола'.\n" +
+                "We bought good wine for the holiday table.\n" +
+                "Он сказа'л мне что'-то хоро'шее, и я улыбну'лась.\n" +
+                "He told me something good, and I smiled.\n" +
+                "Я ви'жу хоро'шее бу'дущее для на'шей компа'нии.\n" +
+                "I see a good future for our company.\n" +
+                "\n" +
+                "Я да'л пода'рок хоро'шему ма'льчику на день рожде'ния.\n" +
+                "I gave a present to a good boy for his birthday.\n" +
+                "По хоро'шему ко'нкурсу, он побе'дил в соревнова'нии.\n" +
+                "By a good competition, he won the contest.\n" +
+                "Мы обяза'ны хоро'шему руково'дителю за успе'х на'шего прое'кта.\n" +
+                "We owe the success of our project to a good leader.\n" +
+                "\n" +
+                "По'сле хоро'шего сна я чу'вствую себя' бо'дро и гото'в к рабо'те.\n" +
+                "After a good sleep, I feel refreshed and ready for work.\n" +
+                "Я не ви'дел хоро'шего врача' в э'той кли'нике.\n" +
+                "I didn't see a good doctor in this clinic.\n" +
+                "Цена' хоро'шего образова'ния высока', но э'то того' сто'ит.\n" +
+                "The price of a good education is high, but it's worth it.\n" +
+                "\n" +
+                "Э'то хоро'шее реше'ние для на'шей пробле'мы.\n" +
+                "This is a good solution for our problem.\n" +
+                "За'втра бу'дет хоро'шее вре'мя для прогу'лки в па'рке.\n" +
+                "Tomorrow will be a good time for a walk in the park.\n" +
+                "Са'мое хоро'шее уже' произошло', и мы счастли'вы.\n" +
+                "The best has already happened, and we are happy.\n" +
+                "\n" +
+                "Мы говори'ли о хоро'шей иде'е для но'вого старта'па.\n" +
+                "We talked about a good idea for a new startup.\n" +
+                "В хоро'шей по'годе прия'тно гуля'ть по бе'регу мо'ря.\n" +
+                "It's pleasant to walk along the seashore in good weather.\n" +
+                "Он мечта'ет о хоро'шей рабо'те с высоко'й за'работной пла'той.\n" +
+                "He dreams about a good job with a high salary.\n" +
+                "\n" +
+                "Она' облада'ет хоро'шей па'мятью на и'мена и да'ты.\n" +
+                "She possesses a good memory for names and dates.\n" +
+                "С хоро'шей кни'гой мо'жно забы'ть о пробле'мах на не'сколько часо'в.\n" +
+                "With a good book, one can forget about problems for several hours.\n" +
+                "Он го'рдится свое'й хоро'шей успева'емостью в шко'ле.\n" +
+                "He is proud of his good academic performance at school.\n" +
+                "\n" +
+                "С хоро'шею подру'гой все'гда найдётся о чём поговори'ть.\n" +
+                "With a good friend there's always something to talk about.\n" +
+                "Она' любу'ется хоро'шею карти'ной, вися'щей на стене'.\n" +
+                "She admires a good painting hanging on the wall.\n" +
+                "Я наслажда'юсь хоро'шею музы'кой, когда' е'ду в маши'не.\n" +
+                "I enjoy good music when I drive in the car.\n" +
+                "\n" +
+                "Я ви'дел хоро'шую де'вушку на у'лице и улыбну'лся ей.\n" +
+                "I saw a good girl on the street and smiled at her.\n" +
+                "Она' купи'ла хоро'шую су'мку в но'вом мага'зине.\n" +
+                "She bought a good bag at the new store.\n" +
+                "Мы и'щем хоро'шую кварти'ру для наше'й семьи'.\n" +
+                "We are looking for a good apartment for our family.\n" +
+                "\n" +
+                "Я жела'ю тебе' хоро'шей по'годы на отды'хе.\n" +
+                "I wish you good weather for your vacation.\n" +
+                "По хоро'шей доро'ге е'хать быстре'е и безопа'снее.\n" +
+                "It's faster and safer to drive on a good road.\n" +
+                "Мы шли к хоро'шей це'ли, прео'долевая все' тру'дности.\n" +
+                "We were going towards a good goal, overcoming all difficulties.\n" +
+                "\n" +
+                "У нас нет хоро'шей иде'и для пода'рка ма'ме.\n" +
+                "We don't have a good idea for a gift for mom.\n" +
+                "Я хочу' кусо'к хоро'шей пи'ццы на у'жин.\n" +
+                "I want a piece of good pizza for dinner.\n" +
+                "Он ждёт хоро'шей ново'сти о своём собесе'довании.\n" +
+                "He is waiting for good news about his interview.\n" +
+                "\n" +
+                "Э'та хоро'шая кни'га мне нра'вится и я её рекоменду'ю.\n" +
+                "I like this good book and I recommend it.\n" +
+                "Моя' хоро'шая подру'га прие'дет за'втра из друго'го го'рода.\n" +
+                "My good friend will arrive tomorrow from another city.\n" +
+                "Сего'дня была' хоро'шая по'года для прогу'лки на вели'ке.\n" +
+                "Today was good weather for a bike ride.\n" +
+                "\n" +
+                "О'н расска'зывал мне о хоро'шем дру'ге из свое'го де'тства.\n" +
+                "He was telling me about a good friend from his childhood.\n" +
+                "В хоро'шем мага'зине мно'го покупа'телей да'же в бу'дние дни.\n" +
+                "There are many customers in a good store even on weekdays.\n" +
+                "Он всегда' мечта'ет о хоро'шем у'тре с ча'шкой ко'фе.\n" +
+                "He always dreams about a good morning with a cup of coffee.\n" +
+                "\n" +
+                "Я пообе'дал с хоро'шим аппети'том по'сле долго'й прогу'лки.\n" +
+                "I had lunch with a good appetite after a long walk.\n" +
+                "С хоро'шим учи'телем лю'бой уро'к интере'сен и познавате'лен.\n" +
+                "With a good teacher, any lesson is interesting and informative.\n" +
+                "Он де'лится хоро'шим настрое'нием со все'ми вокру'г.\n" +
+                "He shares his good mood with everyone around.\n" +
+                "\n" +
+                "Я прочита'л хоро'ший рома'н за вы'ходные дни.\n" +
+                "I read a good novel over the weekend.\n" +
+                "Мы ви'дели хоро'ший фи'льм, кото'рый нас впечатли'л.\n" +
+                "We saw a good film that impressed us.\n" +
+                "Он купи'л хоро'ший пода'рок свое'й сестре' на Рождество'.\n" +
+                "He bought a good present for his sister for Christmas.\n" +
+                "\n" +
+                "Мы жда'ли хоро'шего тре'нера для на'шей футбо'льной кома'нды.\n" +
+                "We were waiting for a good coach for our soccer team.\n" +
+                "Кто' ви'дел хоро'шего па'рня, кото'рый помога'ет пожилы'м?\n" +
+                "Who saw a good guy who helps the elderly?\n" +
+                "Я хочу' пригласи'ть хоро'шего музыкан'та на наш пра'здник.\n" +
+                "I want to invite a good musician to our celebration.\n" +
+                "\n" +
+                "Мы пошли' к хоро'шему специали'сту за сове'том.\n" +
+                "We went to a good specialist for advice.\n" +
+                "Я рассказа'л новость хоро'шему сосе'ду, и он обра'довался.\n" +
+                "I told the news to a good neighbor, and he was happy.\n" +
+                "О'н подошёл к хоро'шему мо'лодому челове'ку, что'бы спроси'ть доро'гу.\n" +
+                "He approached a good young man to ask for directions.\n" +
+                "\n" +
+                "По'сле хоро'шего сна я чу'вствую себя' бо'дро.\n" +
+                "After a good sleep, I feel refreshed.\n" +
+                "Я не ви'дел хоро'шего врача' в э'той кли'нике.\n" +
+                "I didn't see a good doctor in this clinic.\n" +
+                "Цена' хоро'шего образова'ния высока'.\n" +
+                "The price of a good education is high.\n" +
+                "\n" +
+                "Э'тот хоро'ший дом о'чень ста'рый, но кре'пкий.\n" +
+                "This good house is very old, but sturdy.\n" +
+                "Мой но'вый сосе'д - о'чень хоро'ший челове'к.\n" +
+                "My new neighbor is a very good person.\n" +
+                "Э'то был хоро'ший день для рыба'лки на о'зере.\n" +
+                "It was a good day for fishing on the lake.\n" +
+                "\n" +
+                "Де'ти сего'дня о'чень хороши' и послу'шны.\n" +
+                "The children are very good and obedient today.\n" +
+                "Э'ти кни'ги де'йствительно хороши', я их всем рекоменду'ю.\n" +
+                "These books are really good, I recommend them to everyone.\n" +
+                "Все' его' и'деи были' хороши', но не'которые нереализу'емы.\n" +
+                "All his ideas were good, but some are not feasible.\n" +
+                "\n" +
+                "Сего'дня я чу'вствую себя' хорошо' по'сле отпу'ска.\n" +
+                "Today I feel good after vacation.\n" +
+                "У нас всё хорошо', не волну'йтесь за нас.\n" +
+                "Everything is good with us, don't worry about us.\n" +
+                "Э'тот ко'фе па'хнет о'чень хорошо', как у'тром в де'ревне.\n" +
+                "This coffee smells very good, like in the village in the morning.\n" +
+                "\n" +
+                "Э'та де'вушка о'чень хороша' и у'мна.\n" +
+                "This girl is very good and smart.\n" +
+                "Пого'да сего'дня просто' хороша' для прогу'лки.\n" +
+                "The weather today is simply good for a walk.\n" +
+                "Ста'рая пе'сня по'-пре'жнему хороша', она' навева'ет воспо'минания.\n" +
+                "The old song is still good, it brings back memories.\n" +
+                "\n" +
+                "Он хоро'ш в свое'й рабо'те, все'гда вы'полняет её отли'чно.\n" +
+                "He is good at his job, always performs it excellently.\n" +
+                "Э'тот фильм о'чень хоро'ш, я смотре'л его' два'жды.\n" +
+                "This film is very good, I watched it twice.\n" +
+                "Мой но'вый сосе'д, хотя' и ста'рый, но хоро'ш со'бой.\n" +
+                "My new neighbor, though old, is good-looking.\n" +
+                "\n" +
+                "Он мой лу'чший друг со шко'льных лет.\n" +
+                "He is my best friend since school years.\n" +
+                "Э'тот рестора'н предлага'ет лу'чший се'рвис в го'роде.\n" +
+                "This restaurant offers the best service in the city.\n" +
+                "Я все'гда стремлю'сь к лу'чшему результа'ту в любо'м де'ле.\n" +
+                "I always strive for the best result in any matter.\n" +
+                "\n" +
+                "Э'тот вариа'нт наилу'чший из всех', что мы рассмотре'ли.\n" +
+                "This option is the very best of all that we considered.\n" +
+                "Жела'ю вам наилу'чшего успе'ха в учёбе и жи'зни.\n" +
+                "I wish you the very best success in your studies and life.\n" +
+                "Мы вы'брали наилу'чший спосо'б реше'ния пробле'мы.\n" +
+                "We chose the very best way to solve the problem.\n" +
+                "\n" +
+                "Сего'дня пого'да лу'чше, чем вчера', мо'жно пойти' гуля'ть.\n" +
+                "Today the weather is better than yesterday, we can go for a walk.\n" +
+                "Ты мо'жешь сде'лать э'то лу'чше, я ве'рю в тебя'.\n" +
+                "You can do it better, I believe in you.\n" +
+                "Мне лу'чше уйти' сейча'с, я уста'л.\n" +
+                "It's better for me to leave now, I'm tired.";
 
-        String advancedSentences = "Ста'рый до'ктор, оста'вшийся на дежу'рстве в одино'честве, столкну'лся с необы'чным слу'чаем.\n" +
-                "The old doctor, who remained on duty alone, encountered an unusual case.\n" +
-                "Participle Active Past\n" +
+        String intermediateSentences = "Мы' ча'сто вспомина'ем о хоро'ших моментах из на'шего путеше'ствия.\n" +
+                "We often recall the good moments from our trip.\n" +
+                "В хоро'ших компа'ниях всегда' ца'рит атмосфе'ра взаимопо'нимания и дове'рия.\n" +
+                "In good companies, an atmosphere of mutual understanding and trust always prevails.\n" +
+                "Руководи'тель подели'лся со'трудникам пла'нами о хоро'ших перспекти'вах развития' прое'кта.\n" +
+                "The manager shared with employees plans about good prospects for project development.\n" +
                 "\n" +
-                "Её' сме'х, оста'вшийся в возду'хе, напомина'л о мину'вших днях и сбы'вшихся наде'ждах.\n" +
-                "Her laughter, lingering in the air, reminded of days gone by and realized hopes.\n" +
-                "Participle Active Past\n" +
+                "То'лько хоро'шими дела'ми мо'жно доказа'ть свою' пре'данность идеа'лам гума'нности.\n" +
+                "Only with good deeds can one prove their devotion to the ideals of humanity.\n" +
+                "Благодаря' хоро'шими организато'рами, конфере'нция прошла' без сучка' и задо'ринки.\n" +
+                "Thanks to good organizers, the conference went off without a hitch.\n" +
+                "Мы' наслажда'лись хоро'шими собесе'дниками весь ве'чер, обсу'ждая филосо'фские пробле'мы.\n" +
+                "We enjoyed good conversationalists all evening, discussing philosophical problems.\n" +
                 "\n" +
-                "Ка'ждый, оста'вшийся без биле'та, до'лжен был сро'чно поки'нуть стадио'н.\n" +
-                "Everyone who was left without a ticket had to immediately leave the stadium.\n" +
-                "Participle Active Past\n" +
+                "Я' всегда' ищу' хоро'шие кни'ги, что'бы расши'рить свой кругозо'р и лекси'кон.\n" +
+                "I always look for good books to broaden my horizons and vocabulary.\n" +
+                "По'сле до'лгих по'исков мы' наконец-то нашли' хоро'шие биле'ты на конце'рт наше'й люби'мой гру'ппы.\n" +
+                "After a long search, we finally found good tickets for our favorite band's concert.\n" +
+                "Не забыва'й смотре'ть хоро'шие фи'льмы, они' помога'ют рассла'биться и поду'мать о ва'жном.\n" +
+                "Don't forget to watch good films; they help you relax and think about important things.\n" +
                 "\n" +
-                "Оста'вшись без словаря', студе'нту пришло'сь полага'ться на свою' интуи'цию и эруди'цию.\n" +
-                "Having been left without a dictionary, the student had to rely on his intuition and erudition.\n" +
-                "Gerund Past\n" +
+                "Пре'жде чем начина'ть но'вый би'знес, на'до набра'ть хоро'ших специали'стов.\n" +
+                "Before starting a new business, one needs to recruit good specialists.\n" +
+                "На'м удало'сь пригласи'ть хоро'ших друзе'й на на'шу вечери'нку по случа'ю новосе'лья.\n" +
+                "We managed to invite good friends to our housewarming party.\n" +
+                "Тре'нер обеща'л подгото'вить хоро'ших спортсме'нов к предстоя'щим олимпи'йским и'грам.\n" +
+                "The coach promised to prepare good athletes for the upcoming Olympic Games.\n" +
                 "\n" +
-                "Мно'гие, оста'вшись наедине' со свои'ми мы'слями, на'чали переоце'нивать свои' приорите'ты.\n" +
-                "Many, having been left alone with their thoughts, began to re-evaluate their priorities.\n" +
-                "Gerund Past\n" +
+                "Мы' стреми'мся к хоро'шим результа'там в ка'ждом прое'кте, кото'рый мы' начина'ем.\n" +
+                "We strive for good results in every project we start.\n" +
+                "Спаси'бо всем хоро'шим лю'дям, кото'рые оказа'ли на'м бесце'нную по'мощь в тру'дную мину'ту.\n" +
+                "Thanks to all good people who provided us invaluable help in a difficult moment.\n" +
+                "По'сле до'лгих деба'тов, коали'ция пришла' к хоро'шим соглаше'ниям по ключе'вым вопроса'м.\n" +
+                "After long debates, the coalition came to good agreements on key issues.\n" +
                 "\n" +
-                "Худо'жник, оста'вшись на рассве'те на побере'жье, за'мер от великоле'пия зре'лища.\n" +
-                "The artist, having remained on the shore at dawn, froze from the magnificence of the spectacle.\n" +
-                "Gerund Past\n" +
+                "К сожале'нию, по'сле перегово'ров у них' не оста'лось хоро'ших воспомина'ний о той встре'че.\n" +
+                "Unfortunately, after the negotiations, they had no good memories of that meeting left.\n" +
+                "В э'том го'роде, ка'жется, совсе'м нет хоро'ших рестора'нов с национа'льной ку'хней.\n" +
+                "In this city, it seems, there are no good restaurants with national cuisine at all.\n" +
+                "Без хоро'ших инструме'нтов невозмо'жно выполня'ть сло'жную рабо'ту каче'ственно.\n" +
+                "Without good tools, it's impossible to perform complex work with high quality.\n" +
                 "\n" +
-                "То'лько сильне'йшие ви'ды оста'нутся на э'той пла'нете, претерпе'в все климати'ческие измене'ния.\n" +
-                "Only the strongest species will remain on this planet, having endured all climatic changes.\n" +
-                "Third Person Plural\n" +
+                "Хоро'шие дру'зья – э'то бесце'нный да'р, кото'рый на'до цени'ть и бере'чь.\n" +
+                "Good friends are a priceless gift that must be cherished and protected.\n" +
+                "Хоро'шие ново'сти разно'сятся бы'стро, вдохновля'я всех на но'вые сверше'ния.\n" +
+                "Good news spreads quickly, inspiring everyone to new achievements.\n" +
+                "Эти хоро'шие иде'и заслужива'ют того', что'бы их воплоти'ли в жизнь.\n" +
+                "These good ideas deserve to be brought to life.\n" +
                 "\n" +
-                "Несмотря' на все предсказа'ния, не'которые тради'ции оста'нутся непоколеби'мыми в на'шем о'бществе.\n" +
-                "Despite all predictions, some traditions will remain unyielding in our society.\n" +
-                "Third Person Plural\n" +
+                "Мечта'я о хоро'шем бу'дущем, не забыва'й де'йствовать в настоя'щем.\n" +
+                "Dreaming of a good future, don't forget to act in the present.\n" +
+                "В хоро'шем настрое'нии вся'ка рабо'та спо'рится быстре'е и эффе'ктивнее.\n" +
+                "In a good mood, any work proceeds faster and more efficiently.\n" +
+                "На фестива'ле я' при'нял уча'стие в хоро'шем семина'ре по цифро'вому иску'сству.\n" +
+                "At the festival, I participated in a good seminar on digital art.\n" +
                 "\n" +
-                "Если вы оста'нетесь дово'льны на'шим серви'сом, пожа'луйста, порекоменду'йте нас свои'м друзья'м.\n" +
-                "If you remain satisfied with our service, please recommend us to your friends.\n" +
-                "Second Person Plural\n" +
+                "Не'которые лю'ди счита'ют, что мо'жно ста'ть хоро'шим специа'листом, то'лько усер'дно рабо'тая.\n" +
+                "Some people believe that one can become a good specialist only by working hard.\n" +
+                "Э'то'т челове'к стал хоро'шим приме'ром для подража'ния для мно'гих молоды'х уче'ных.\n" +
+                "This person became a good role model for many young scientists.\n" +
+                "По'сле долго'го перелё'та, он наслажда'лся горя'чим ча'ем с хоро'шим ме'дом.\n" +
+                "After a long flight, he enjoyed hot tea with good honey.\n" +
                 "\n" +
-                "Куда' вы оста'нетесь ночева'ть по'сле вечери'нки, е'сли го'родски'е оте'ли перепо'лнены?\n" +
-                "Where will you stay overnight after the party if the city hotels are fully booked?\n" +
-                "Second Person Plural\n" +
+                "На'ша зада'ча – сде'лать что'-то де'йствительно хоро'шее для всего' о'бщества.\n" +
+                "Our task is to do something truly good for the entire society.\n" +
+                "Он всегда' и'щет хоро'шее во всём, да'же в са'мых сло'жных ситуа'циях.\n" +
+                "He always looks for the good in everything, even in the most difficult situations.\n" +
+                "Мы' купи'ли о'чень хоро'шее пальто' по ски'дке, кото'рое прослу'жит мно'го лет.\n" +
+                "We bought a very good coat on sale that will last many years.\n" +
                 "\n" +
-                "Сегодня' мы оста'немся дома', что'бы пересмо'треть все сезо'ны люби'мого сериа'ла.\n" +
-                "Today we will stay home to re-watch all seasons of our favorite series.\n" +
-                "First Person Plural\n" +
+                "К хоро'шему врачу' всегда' стои'т дли'нная очере'дь из пациен'тов.\n" +
+                "There is always a long line of patients for a good doctor.\n" +
+                "Я' стреми'лся к хоро'шему результа'ту, и э'то' мотиви'ровало меня' к дальне'йшим де'йствиям.\n" +
+                "I strived for a good result, and this motivated me to further actions.\n" +
+                "По'сле тяже'лой неде'ли, я' при'вык потака'ть себе' чему'-то хоро'шему.\n" +
+                "After a tough week, I've gotten used to treating myself to something good.\n" +
                 "\n" +
-                "Дава'йте оста'немся ве'рными свои'м идеа'лам, несмо'тря на все искуше'ния и трудности.\n" +
-                "Let's remain true to our ideals, despite all temptations and difficulties.\n" +
-                "First Person Plural\n" +
+                "У них' не' было ничего' хоро'шего, что'бы предложи'ть на'м в то'т моме'нт.\n" +
+                "They had nothing good to offer us at that moment.\n" +
+                "По'сле тако'го до'лгого пути' у меня' нет хоро'шего настрое'ния шути'ть.\n" +
+                "After such a long journey, I am not in a good mood to joke.\n" +
+                "Для достиже'ния тако'го успе'ха не'обходимо мно'го хоро'шего терпе'ния и упо'рства.\n" +
+                "To achieve such success, a lot of good patience and perseverance are necessary.\n" +
                 "\n" +
-                "Я уве'рен, что' его' до'брое и'мя оста'нется в па'мяти люде'й на протяже'нии мно'гих поколе'ний.\n" +
-                "I am sure that his good name will remain in people's memory for many generations.\n" +
-                "Third Person Singular\n" +
+                "Са'мое хоро'шее в э'той ситуа'ции то', что все' оста'лись жи'вы и здоро'вы.\n" +
+                "The best thing in this situation is that everyone remained alive and well.\n" +
+                "Э'то' хоро'шее реше'ние, кото'рое уче'сть интере'сы всех уча'стников прое'кта.\n" +
+                "This is a good solution that takes into account the interests of all project participants.\n" +
+                "Хоро'шее воспита'ние проявля'ется в уме'нии уважа'ть чужо'е мне'ние.\n" +
+                "Good upbringing is manifested in the ability to respect others' opinions.\n" +
                 "\n" +
-                "Что' бы ни случи'лось, и'стина всегда' оста'нется неизме'нной, как бы её' ни пыта'лись скры'ть.\n" +
-                "Whatever happens, the truth will always remain unchanged, no matter how they try to hide it.\n" +
-                "Third Person Singular\n" +
+                "Я' всегда' мечта'л о хоро'шей рабо'те с досто'йной за'работной пла'той.\n" +
+                "I always dreamed of a good job with a decent salary.\n" +
+                "В хоро'шей компа'нии вре'мя лети'т незаме'тно, а бесе'ды прохо'дят оживлённо.\n" +
+                "In good company, time flies by unnoticed, and conversations are lively.\n" +
+                "Он ча'сто вспомина'ет о хоро'шей подру'ге свое'го де'тства, с кото'рой потеря'л связь.\n" +
+                "He often remembers a good friend from his childhood with whom he lost touch.\n" +
                 "\n" +
-                "Е'сли ты оста'нешься со мной' в э'ту тру'дную мину'ту, я никогда' э'того не забу'ду.\n" +
-                "If you stay with me in this difficult moment, I will never forget it.\n" +
-                "Second Person Singular\n" +
+                "Она' писа'ла стихи' хоро'шей ру'чкой, кото'рую подари'ла ей' ба'бушка.\n" +
+                "She wrote poems with a good pen that her grandmother gave her.\n" +
+                "Мы' смо'жем добиться' успе'ха то'лько хоро'шей команд'ной рабо'той.\n" +
+                "We can only achieve success through good teamwork.\n" +
+                "Моя' сестра' ста'ла хоро'шей пиани'сткой благодаря' мно'голетним трениро'вкам.\n" +
+                "My sister became a good pianist thanks to many years of training.\n" +
                 "\n" +
-                "Как ты оста'нешься споко'ен, когда' кру'гом цари'т ха'ос и неопределённость?\n" +
-                "How will you remain calm when chaos and uncertainty reign all around?\n" +
-                "Second Person Singular\n" +
+                "Её' ли'цо сия'ло под хоро'шею шля'пою, не'смотря на паля'щее со'лнце.\n" +
+                "Her face shone under a good hat, despite the scorching sun.\n" +
+                "Дере'вня была' окружена' хоро'шею, плодо'родною зе'млею, бо'гатою урожа'ем.\n" +
+                "The village was surrounded by good, fertile land, rich in harvest.\n" +
+                "Её' му'зыка прони'зана хоро'шею, искре'ннею душо'ю.\n" +
+                "Her music is imbued with a good, sincere soul.\n" +
                 "\n" +
-                "Я оста'нусь непоколеби'м в своём реше'нии, несмо'тря на все угро'зы и угово'ры.\n" +
-                "I will remain unyielding in my decision, despite all threats and persuasion.\n" +
-                "First Person Singular\n" +
+                "Мне' на'до купи'ть хоро'шую ка'меру для мое'го хо'бби – фотогра'фии приро'ды.\n" +
+                "I need to buy a good camera for my hobby – nature photography.\n" +
+                "Она' мечта'ет постро'ить хоро'шую карье'ру в ме'ждународной компа'нии.\n" +
+                "She dreams of building a good career in an international company.\n" +
+                "Мы' прочита'ли о'чень хоро'шую ста'тью о влия'нии кли'мата на мигра'цию птиц.\n" +
+                "We read a very good article about the impact of climate on bird migration.\n" +
                 "\n" +
-                "По'сле всего', что' произойдёт, я оста'нусь ве'рен свои'м принци'пам и убежде'ниям.\n" +
-                "After everything that happens, I will remain true to my principles and beliefs.\n" +
-                "First Person Singular\n" +
+                "Я' всегда' отношу'сь к хоро'шей по'годе как к по'воду для прогу'лки.\n" +
+                "I always treat good weather as an occasion for a walk.\n" +
+                "Ко'шка при'выкла к хоро'шей еде' и тепе'рь не е'ст дешёвый корм.\n" +
+                "The cat got used to good food and now won't eat cheap cat food.\n" +
+                "К хоро'шей иде'е всегда' прислу'шиваются, да'же е'сли она' исхо'дит от нео'пытного челове'ка.\n" +
+                "A good idea is always listened to, even if it comes from an inexperienced person.\n" +
                 "\n" +
-                "В ста'ром до'ме оста'лись лишь э'хо про'шлых сме'хов и слёз, напоми'ная о его' исто'рии.\n" +
-                "Only echoes of past laughter and tears remained in the old house, reminding of its history.\n" +
-                "Past\n" +
+                "Для тако'го сло'жного блю'да ну'жно мно'го хоро'шей и све'жей зе'лени.\n" +
+                "For such a complex dish, a lot of good and fresh greens are needed.\n" +
+                "Без хоро'шей подгото'вки к экза'менам не сто'ит ожида'ть высо'ких оце'нок.\n" +
+                "Without good preparation for exams, one should not expect high grades.\n" +
+                "У них' не' было хоро'шей причи'ны для отсро'чки платежа', и штра'фы бы'ли начисле'ны.\n" +
+                "They had no good reason for delaying the payment, and fines were charged.\n" +
                 "\n" +
-                "То'лько са'мые сто'йкие бойцы' оста'лись на поле' бо'я, отста'ивая после'дний рубе'ж.\n" +
-                "Only the most resilient fighters remained on the battlefield, defending the last frontier.\n" +
-                "Past\n" +
+                "На'ша сосе'дка – о'чень хоро'шая и отзы'вчивая же'нщина, всегда' гото'вая помо'чь.\n" +
+                "Our neighbor is a very good and responsive woman, always ready to help.\n" +
+                "Хоро'шая музы'ка спосо'бна подня'ть настрое'ние да'же в са'мый нена'стный де'нь.\n" +
+                "Good music is capable of lifting one's spirits even on the most inclement day.\n" +
+                "Э'то' была' о'чень хоро'шая возмо'жность по'высить свою' квалифика'цию и зна'ния.\n" +
+                "This was a very good opportunity to improve one's qualifications and knowledge.\n" +
                 "\n" +
-                "Ка'жется, что' нам оста'лось то'лько ждать и наде'яться на благоприя'тный исхо'д собы'тий.\n" +
-                "It seems that all that's left for us is to wait and hope for a favorable outcome.\n" +
-                "Past\n" +
+                "В хоро'шем рестора'не вы' всегда' найдёте безупре'чное обслу'живание.\n" +
+                "In a good restaurant, you will always find impeccable service.\n" +
+                "Он расска'зывал о хоро'шем фи'льме, кото'рый по'смотрел на прошлой неде'ле.\n" +
+                "He was talking about a good film he watched last week.\n" +
+                "По'сле до'лгих разду'мий, мы' сошлись' на хоро'шем плане де'йствий.\n" +
+                "After long deliberations, we agreed on a good plan of action.\n" +
                 "\n" +
-                "По'сле того' как все ушли', на столе' оста'лось то'лько не'сколько кро'шек от пра'здничного пирога'.\n" +
-                "After everyone left, only a few crumbs from the festive pie remained on the table.\n" +
-                "Past\n" +
+                "Он всегда' де'лится хоро'шим настрое'нием со свои'ми колле'гами и друзья'ми.\n" +
+                "He always shares his good mood with his colleagues and friends.\n" +
+                "Мы' добра'лись до горо'да хоро'шим авто'бусом, оснащённым всем необходи'мым.\n" +
+                "We reached the city by a good bus equipped with everything necessary.\n" +
+                "Что'бы быть хоро'шим учи'телем, на'до не то'лько зна'ть предме'т, но и уме'ть его' пода'ть.\n" +
+                "To be a good teacher, one needs not only to know the subject but also to be able to present it.\n" +
                 "\n" +
-                "Она' оста'лась прекра'сна, несмо'тря на проше'дшие годы' и пережи'тые испыта'ния.\n" +
-                "She remained beautiful, despite the passing years and endured trials.\n" +
-                "Past\n" +
+                "Я' хочу' купи'ть хоро'ший велосипе'д, что'бы е'здить на рабо'ту ка'ждый де'нь.\n" +
+                "I want to buy a good bicycle to ride to work every day.\n" +
+                "Да'же в плохо'й пого'де мо'жно уви'деть хоро'ший зака'т, е'сли присмотре'ться.\n" +
+                "Even in bad weather, one can see a good sunset if one looks closely.\n" +
+                "Мой брат' про'сит меня' посове'товать ему' хоро'ший компью'тер для и'гр.\n" +
+                "My brother asks me to recommend him a good computer for gaming.\n" +
                 "\n" +
-                "Эта' тради'ция оста'лась живу'чей, передава'ясь из поколе'ния в поколе'ние без измене'ний.\n" +
-                "This tradition remained vital, passing from generation to generation without changes.\n" +
-                "Past\n" +
+                "Мы' ждём хоро'шего ветерина'ра, что'бы осмотре'ть на'шего пито'мца.\n" +
+                "We are waiting for a good veterinarian to examine our pet.\n" +
+                "На'м рекомендова'ли хоро'шего юри'ста, кото'рый специализи'руется на жили'щных вопроса'х.\n" +
+                "We were recommended a good lawyer who specializes in housing issues.\n" +
+                "По'сле уволь'нения ста'рого нача'льника, они' и'щут хоро'шего управля'ющего для депа'ртамента.\n" +
+                "After the old boss was fired, they are looking for a good manager for the department.\n" +
                 "\n" +
-                "Он оста'лся равноду'шным к чужи'м страда'ниям, погружённый в свои' со'бственные мы'сли.\n" +
-                "He remained indifferent to others' suffering, immersed in his own thoughts.\n" +
-                "Past\n" +
+                "По хоро'шему счёту, он дол'жен был дав'но извини'ться за своё' поведе'ние.\n" +
+                "By all accounts, he should have apologized for his behavior long ago.\n" +
+                "Не стоит' торопи'ться с вы'водами, приди'те к хоро'шему мне'нию по'сле все'х фак'тов.\n" +
+                "Don't rush to conclusions; come to a good opinion after all the facts.\n" +
+                "Я' помогу' любо'му хоро'шему челове'ку, оказа'вшемуся в беде'.\n" +
+                "I will help any good person who finds themselves in trouble.\n" +
                 "\n" +
-                "Несмотря' на предложе'ние уе'хать, он оста'лся сто'ять на перекрёстке, заду'мавшись о свое'й судьбе'.\n" +
-                "Despite the offer to leave, he remained standing at the crossroads, pondering his fate.\n" +
-                "Past\n" +
+                "У меня' нет никако'го хоро'шего предчу'вствия о пред'стоящей встре'че.\n" +
+                "I have no good premonition about the upcoming meeting.\n" +
+                "Для э'того прое'кта не'обходимо мно'го хоро'шего ко'фе, что'бы сохраня'ть бо'дрость.\n" +
+                "For this project, a lot of good coffee is needed to stay alert.\n" +
+                "Они' отказа'лись от хоро'шего предложе'ния, потому' что их' це'ли бы'ли ины'ми.\n" +
+                "They refused a good offer because their goals were different.\n" +
                 "\n" +
-                "Оста'ньтесь, пожа'луйста, на'шими гостя'ми ещё' на день, мы бу'дем о'чень ра'ды ва'шему прису'тствию.\n" +
-                "Please, remain our guests for one more day; we will be very happy with your presence.\n" +
-                "Imperative Plural\n" +
+                "Ка'ждый но'вый де'нь – э'то хоро'ший шанс нача'ть что'-то с чистого листа'.\n" +
+                "Every new day is a good chance to start something from scratch.\n" +
+                "Мой со'сед – о'чень хоро'ший челове'к, всегда' гото'вый подде'ржать и вы'слушать.\n" +
+                "My neighbor is a very good person, always ready to support and listen.\n" +
+                "Э'то'т музе'й – хоро'ший приме'р того', как мо'жно сочета'ть исто'рию и совре'менность.\n" +
+                "This museum is a good example of how history and modernity can be combined.\n" +
                 "\n" +
-                "Уважа'емые пассажи'ры, оста'ньтесь на свои'х места'х до по'лной остано'вки по'езда.\n" +
-                "Dear passengers, please remain in your seats until the train comes to a complete stop.\n" +
-                "Imperative Plural\n" +
+                "Все' э'ти предложе'ния хороши', но нам' ну'жно вы'брать са'мое эффе'ктивное.\n" +
+                "All these proposals are good, but we need to choose the most effective one.\n" +
+                "Его' шу'тки всегда' хороши' и помога'ют разряди'ть напряжённую обстано'вку.\n" +
+                "His jokes are always good and help defuse a tense atmosphere.\n" +
+                "Её' иде'и хороши', но им' не' хватает' практи'чности и конкре'тики.\n" +
+                "Her ideas are good, but they lack practicality and specificity.\n" +
                 "\n" +
-                "Оста'нься че'стным с самим' собо'й, и'стина всегда' освободи'т тебя' от бре'мени лжи.\n" +
-                "Remain honest with yourself; the truth will always free you from the burden of lies.\n" +
-                "Imperative Singular\n" +
+                "Хорошо', что ты' на'конец-то приня'л пра'вильное реше'ние.\n" +
+                "It's good that you finally made the right decision.\n" +
+                "На'м всегда' бы'ло хорошо' вме'сте, несмо'тря на все' тру'дности.\n" +
+                "We were always good together, despite all the difficulties.\n" +
+                "Спа'ть на све'жем во'здухе о'чень хорошо' для здоро'вья.\n" +
+                "Sleeping outdoors is very good for health.\n" +
                 "\n" +
-                "Молю', оста'нься со мной' в э'ту мра'чную но'чь, мне так ну'жна твоя' подде'ржка.\n" +
-                "I beg you, stay with me on this dark night, I need your support so much.\n" +
-                "Imperative Singular";
+                "Э'то' пла'тье на тебе' о'чень хороша', подчёркивает фигу'ру.\n" +
+                "This dress looks very good on you, emphasizing your figure.\n" +
+                "Идея' хороша', но для её' реализа'ции потре'буется мно'го ресур'сов.\n" +
+                "The idea is good, but its implementation will require many resources.\n" +
+                "По'сле дождя', пого'да на у'лице была' ну' о'чень хороша', прямо' как на куро'рте.\n" +
+                "After the rain, the weather outside was just very good, just like at a resort.\n" +
+                "\n" +
+                "Э'то'т план хоро'ш, но нам' ну'жно обсуди'ть дета'ли пе'ред нача'лом рабо'ты.\n" +
+                "This plan is good, but we need to discuss the details before starting work.\n" +
+                "Мой де'душка всегда' говори'л: \"До'ктор хоро'ш, да'же е'сли не' ле'чит, а то'лько слу'шает\".\n" +
+                "My grandfather always used to say: \"A doctor is good, even if he doesn't treat but only listens.\"\n" +
+                "Как же' э'то'т кофе' хоро'ш! Я' вы'пил уже' три' ча'шки.\n" +
+                "How good this coffee is! I've already drunk three cups.\n" +
+                "\n" +
+                "Он счита'ется лу'чшим специа'листом в свое'й о'трасли благодаря' огро'мному о'пыту.\n" +
+                "He is considered the best specialist in his field thanks to vast experience.\n" +
+                "На'ша цель – предоста'вить клиен'там лу'чший се'рвис по са'мым конкуре'нтным це'нам.\n" +
+                "Our goal is to provide clients with the best service at the most competitive prices.\n" +
+                "Э'то'т фильм был призна'н лу'чшим детекти'вом го'да на ме'ждународном кинофестива'ле.\n" +
+                "This film was recognized as the best detective of the year at the international film festival.\n" +
+                "\n" +
+                "Для достиже'ния наилу'чшего результа'та мы' должны' испо'льзовать все' име'ющиеся ресу'рсы.\n" +
+                "To achieve the very best result, we must use all available resources.\n" +
+                "У на'с есть наилу'чший ша'нс вы'играть э'ту' игру', е'сли мы' бу'дем игра'ть сла'женно.\n" +
+                "We have the very best chance to win this game if we play cohesively.\n" +
+                "На'м пообеща'ли наилу'чший се'рвис и индивидуа'льный подхо'д к ка'ждому клиен'ту.\n" +
+                "We were promised the very best service and an individual approach to each client.\n" +
+                "\n" +
+                "Сегодня' на у'лице лу'чше, чем вчера', мо'жно вы'йти прогуля'ться в пар'ке.\n" +
+                "It's better outside today than yesterday; one can go for a walk in the park.\n" +
+                "Я' чу'вствую себя' значи'тельно лу'чше по'сле того', как по'спал десять' часо'в.\n" +
+                "I feel significantly better after sleeping for ten hours.\n" +
+                "Иногда' молча'ние лу'чше любы'х слов, осо'бенно в спо'ре.\n" +
+                "Sometimes silence is better than any words, especially in an argument.";
 
-        String intermediateSentences = "Оста'вшийся хлеб разда'ли бе'дным.\n" +
-                "The remaining bread was given to the poor.\n" +
-                "Nominative\n" +
-                "\n" +
-                "Он не мог изба'виться от чу'вства гру'сти, оста'вшегося по'сле новосте'й.\n" +
-                "He couldn't shake off the feeling of sadness that had remained after the news.\n" +
-                "Genitive\n" +
-                "\n" +
-                "Мы обсуди'ли докуме'нты, оста'вшиеся от ста'рого архи'ва.\n" +
-                "We discussed the documents that remained from the old archive.\n" +
-                "Nominative\n" +
-                "\n" +
-                "Оста'вшись одна', она' начала' размышля'ть.\n" +
-                "Having stayed alone, she began to reflect.\n" +
-                "Gerund Past\n" +
-                "\n" +
-                "Оста'вшись ещё' на час, он наконе'ц у'ехал.\n" +
-                "Having stayed for another hour, he finally left.\n" +
-                "Gerund Past\n" +
-                "\n" +
-                "Оста'вшись в тени', шпио'н внима'тельно наблюда'л за свое'й це'лью.\n" +
-                "Having remained in the shadows, the spy carefully observed his target.\n" +
-                "Gerund Past\n" +
-                "\n" +
-                "Мно'гие вопро'сы оста'нутся без отве'та.\n" +
-                "Many questions will remain unanswered.\n" +
-                "Third Person Plural\n" +
-                "\n" +
-                "Го'сти оста'нутся до полу'ночи.\n" +
-                "The guests will stay until midnight.\n" +
-                "Third Person Plural\n" +
-                "\n" +
-                "Несмотря' на все уси'лия, следы' преступле'ния оста'нутся.\n" +
-                "Despite all efforts, traces of the crime will remain.\n" +
-                "Third Person Plural\n" +
-                "\n" +
-                "Вы оста'нетесь здесь на ночь?\n" +
-                "Will you stay here for the night?\n" +
-                "Second Person Plural\n" +
-                "\n" +
-                "Е'сли вы поспеши'те, то оста'нетесь незаме'ченными.\n" +
-                "If you hurry, you will remain undetected.\n" +
-                "Second Person Plural\n" +
-                "\n" +
-                "Долго ли вы оста'нетесь равноду'шными к э'тому де'лу?\n" +
-                "How long will you remain indifferent to this matter?\n" +
-                "Second Person Plural\n" +
-                "\n" +
-                "Мы оста'немся ве'рными на'шим при'нципам.\n" +
-                "We will stay true to our principles.\n" +
-                "First Person Plural\n" +
-                "\n" +
-                "Дава'йте оста'немся до'ма сего'дня ве'чером.\n" +
-                "Let's stay home tonight.\n" +
-                "First Person Plural\n" +
-                "\n" +
-                "Мы оста'немся еди'ными, несмотря' на все препя'тствия.\n" +
-                "We will remain united despite all obstacles.\n" +
-                "First Person Plural\n" +
-                "\n" +
-                "То'лько оди'н челове'к оста'нется.\n" +
-                "Only one person will remain.\n" +
-                "Third Person Singular\n" +
-                "\n" +
-                "Секре'т оста'нется ме'жду на'ми.\n" +
-                "The secret will remain between us.\n" +
-                "Third Person Singular\n" +
-                "\n" +
-                "Он оста'нется для меня' зага'дкой наве'ки.\n" +
-                "He will remain an enigma to me forever.\n" +
-                "Third Person Singular\n" +
-                "\n" +
-                "Ты оста'нешься со мной'?\n" +
-                "Will you stay with me?\n" +
-                "Second Person Singular\n" +
-                "\n" +
-                "Е'сли ты не бу'дешь боро'ться, то оста'нешься рабо'м свои'х стра'хов.\n" +
-                "If you don't fight, you'll remain a slave to your fears.\n" +
-                "Second Person Singular\n" +
-                "\n" +
-                "Ты оста'нешься в мое'й па'мяти наве'чно.\n" +
-                "You will remain in my memory forever.\n" +
-                "Second Person Singular\n" +
-                "\n" +
-                "Я оста'нусь в оте'ле на неде'лю.\n" +
-                "I will stay at the hotel for a week.\n" +
-                "First Person Singular\n" +
-                "\n" +
-                "Я оста'нусь оптими'стом, что бы ни случи'лось.\n" +
-                "I will remain an optimist, no matter what happens.\n" +
-                "First Person Singular\n" +
-                "\n" +
-                "Я оста'нусь пре'данным свои'м при'нципам.\n" +
-                "I will remain loyal to my principles.\n" +
-                "First Person Singular\n" +
-                "\n" +
-                "Они' оста'лись до'ма вчера'.\n" +
-                "They stayed at home yesterday.\n" +
-                "Past\n" +
-                "\n" +
-                "То'лько не'сколько моне'т оста'лись у него' в карма'не.\n" +
-                "Only a few coins remained in his pocket.\n" +
-                "Past\n" +
-                "\n" +
-                "Де'ти оста'лись восто'рженными по'сле представле'ния.\n" +
-                "The children remained excited after the show.\n" +
-                "Past\n" +
-                "\n" +
-                "Оста'лось все'го пять мину'т до конца' уро'ка.\n" +
-                "Only five minutes remained until the end of the lesson.\n" +
-                "Past\n" +
-                "\n" +
-                "Оста'лось не'ясным, почему' он у'ехал так внеза'пно.\n" +
-                "It remained unclear why he left so suddenly.\n" +
-                "Past\n" +
-                "\n" +
-                "Доста'точно еды' оста'лось на ещё' два дня.\n" +
-                "Enough food remained for another two days.\n" +
-                "Past\n" +
-                "\n" +
-                "Она' оста'лась помо'чь.\n" +
-                "She stayed behind to help.\n" +
-                "Past\n" +
-                "\n" +
-                "Ко'шка оста'лась одна' на кры'ше.\n" +
-                "The cat remained alone on the roof.\n" +
-                "Past\n" +
-                "\n" +
-                "Ма'ленькая наде'жда оста'лась в её' се'рдце.\n" +
-                "A small hope remained in her heart.\n" +
-                "Past\n" +
-                "\n" +
-                "То'лько оди'н солда'т оста'лся в живы'х.\n" +
-                "Only one soldier remained alive.\n" +
-                "Past\n" +
-                "\n" +
-                "Он оста'лся споко'йным, несмотря' на ха'ос.\n" +
-                "He remained calm despite the chaos.\n" +
-                "Past\n" +
-                "\n" +
-                "Портфе'ль оста'лся на сто'ле.\n" +
-                "The briefcase remained on the table.\n" +
-                "Past\n" +
-                "\n" +
-                "Пожа'луйста, оста'ньтесь ещё' ненадо'лго.\n" +
-                "Please, stay a little longer.\n" +
-                "Imperative Plural\n" +
-                "\n" +
-                "Оста'ньтесь бди'тельными!\n" +
-                "Remain vigilant!\n" +
-                "Imperative Plural\n" +
-                "\n" +
-                "Не оста'ньтесь равноду'шными пе'ред лицо'м несправедли'вости!\n" +
-                "Don't remain indifferent in the face of injustice!\n" +
-                "Imperative Plural\n" +
-                "\n" +
-                "Оста'нься со мной'!\n" +
-                "Stay with me!\n" +
-                "Imperative Singular\n" +
-                "\n" +
-                "Оста'нься си'льным, мой' друг.\n" +
-                "Remain strong, my friend.\n" +
-                "Imperative Singular\n" +
-                "\n" +
-                "Пожа'луйста, оста'нься на у'жин.\n" +
-                "Please, stay for dinner.\n" +
-                "Imperative Singular";
+        String definitions = "Э'то то, что отли'чно выпо'лняет свою' фу'нкцию и'ли о'чень поле'зно.\n" +
+                "Что'-то, что прино'сит ра'дость и'ли удово'льствие челове'ку.\n" +
+                "Челове'к, кото'рый ве'жливо себя' ведёт и де'лает до'брые дела'.";
 
-        String beginnerSentences = "Ма'льчeк, оста'вшийся оди'н, запла'кал.\n" +
-                "The boy who remained alone started crying.\n" +
-                "Short\n" +
+        String longDefinition = "**хороший**\n" +
                 "\n" +
-                "Мы нашли' после'дний кусо'к то'рта, оста'вшийся на сто'ле.\n" +
-                "We found the last piece of cake, the one that remained on the table.\n" +
-                "Prepositional\n" +
+                "Это слово используется, чтобы описать что-то или кого-то, что нам нравится и вызывает положительные эмоции. Обычно оно означает высокое качество, приятные свойства или хорошие качества характера.";
+        String etymology = "Слово **\"хоро'ший\"** – одно из самых важных и старых в русском языке.\n" +
                 "\n" +
-                "Докуме'нт, оста'вшийся на столе', был о'чень ва'жным.\n" +
-                "The document remaining on the table was very important.\n" +
-                "Participle Active Past\n" +
+                "1.  **Происхождение:** Оно имеет древние корни и пришло к нам из **древнерусского языка**, а его происхождение связано с **общеславянскими корнями**. Это означает, что подобные слова были и в других славянских языках.\n" +
                 "\n" +
-                "Оста'вшись до'ма, она' прочита'ла интере'сную кни'гу.\n" +
-                "Having stayed at home, she read an interesting book.\n" +
-                "Gerund Past\n" +
+                "2.  **Корень и древнее значение:** Корень слова \"хороший\" – **\"хор-\"**. В древности этот корень был связан со значениями, которые касались **порядка, красоты, чего-то аккуратного, ограждённого или круга**.\n" +
                 "\n" +
-                "Он помаха'л руко'й, оста'вшись на платфор'ме.\n" +
-                "He waved goodbye, having remained on the platform.\n" +
-                "Prepositional\n" +
+                "    *   Например, \"хор-\" мог означать \"огороженное место\" (как двор или участок земли), что-то \"правильное\", \"устроенное\" или \"красивое\".\n" +
                 "\n" +
-                "Оста'вшись голо'дным, кот гру'стно посмотре'л на хозя'ина.\n" +
-                "Having remained hungry, the cat looked sadly at its owner.\n" +
-                "Accusative\n" +
+                "3.  **Развитие значения:**\n" +
+                "    *   Изначально \"хороший\" могло означать \"красивый\", \"аккуратный\", \"сделанный по правилам\" или \"тот, что находится в порядке\".\n" +
+                "    *   Постепенно значение слова расширилось. От идеи \"порядка\" и \"красоты\" оно перешло к более широкому смыслу \"добрый\", \"качественный\", \"приятный\", \"правильный\" – именно так мы используем его сегодня.\n" +
                 "\n" +
-                "Они' оста'нутся на ночь у нас.\n" +
-                "They will stay for the night at our place.\n" +
-                "Third Person Plural\n" +
+                "4.  **Связанные слова:** От того же древнего корня \"хор-\" происходит, например, слово **\"хоромы\"** – это большой, красивый и хорошо построенный дом. Это показывает связь между \"хорошим\" и идеей чего-то \"красивого\", \"качественного\" и \"правильного\".";
+        String usage = "Слово \"хороший\" – это очень частое и универсальное слово в русском языке.\n" +
                 "\n" +
-                "Е'сли не поспеши'те, то оста'нутся то'лько кро'шки.\n" +
-                "If you don't hurry, only crumbs will remain.\n" +
-                "Nominative\n" +
+                "*   **Формальность или неформальность**: Это нейтральное слово. Вы можете использовать его как в формальных ситуациях (например, на работе или учёбе), так и в неформальных (с друзьями, в семье). Оно подходит для любого стиля общения.\n" +
                 "\n" +
-                "Я наде'юсь, что де'ти оста'нутся дово'льны.\n" +
-                "I hope the children will remain satisfied.\n" +
-                "Short\n" +
+                "*   **Профессиональный или академический контекст**: Да, \"хороший\" очень часто используется в профессиональных и академических контекстах. Например, вы можете сказать: \"хороший результат\", \"хорошая идея\", \"хорошая оценка за экзамен\", \"хорошая работа\".\n" +
                 "\n" +
-                "Вы оста'нетесь с на'ми или' пойдёте домо'й?\n" +
-                "Will you stay with us or go home?\n" +
-                "Second Person Plural\n" +
+                "*   **Письменный или устный язык**: Это слово одинаково часто встречается как в устной речи (мы говорим его каждый день), так и в письменной (в книгах, статьях, письмах, сообщениях).\n" +
                 "\n" +
-                "Е'сли вы оста'нетесь здесь, то уви'дите всё са'ми.\n" +
-                "If you stay here, you will see everything yourselves.\n" +
-                "Nominative\n" +
+                "*   **Региональное использование**: Это стандартное слово русского языка. Его понимают и используют во всех регионах, где говорят по-русски. Нет никаких региональных особенностей.\n" +
                 "\n" +
-                "По'сле тако'го обе'да вы то'чно оста'нетесь сы'ты.\n" +
-                "After such a dinner, you will definitely remain full.\n" +
-                "Short\n" +
+                "*   **Социальные ситуации**: Вы можете использовать \"хороший\", чтобы описывать почти всё:\n" +
+                "    *   **Людей**: \"хороший человек\", \"хороший друг\", \"хороший учитель\".\n" +
+                "    *   **Предметы**: \"хорошая книга\", \"хороший телефон\", \"хорошая машина\".\n" +
+                "    *   **События**: \"хороший концерт\", \"хороший фильм\", \"хорошее путешествие\".\n" +
+                "    *   **Погоду**: \"хорошая погода\".\n" +
+                "    *   **Настроение**: \"хорошее настроение\".\n" +
+                "    *   **Качество**: \"хорошее вино\", \"хорошая еда\".\n" +
+                "    Оно выражает общую положительную оценку, одобрение или удовлетворение.\n" +
                 "\n" +
-                "Дава'йте оста'немся друзья'ми.\n" +
-                "Let's remain friends.\n" +
-                "First Person Plural\n" +
+                "*   **Культурные или стилистические особенности**: \"Хороший\" – это базовое прилагательное для выражения положительного качества. Оно простое, понятное и очень универсальное. Это одно из первых слов, которые учат в русском языке, чтобы сказать что-то позитивное.";
+        String formation = "Слово \"хороший\" — это прилагательное. Давайте посмотрим, как оно построено:\n" +
                 "\n" +
-                "Мы оста'немся в го'роде на выходны'е.\n" +
-                "We will stay in the city for the weekend.\n" +
-                "Prepositional\n" +
+                "1.  **Корень (основа слова):** Главная часть слова — это **хорош-**. Именно она несёт основное значение \"good\" или \"добрый\".\n" +
+                "2.  **Приставки (префиксы):** У этого слова нет приставок.\n" +
+                "3.  **Суффиксы:** У этого слова нет суффиксов, которые бы создавали новое слово.\n" +
+                "4.  **Окончание:** Часть слова **-ий** — это окончание прилагательного. Оно показывает, что слово \"хороший\" стоит в мужском роде, единственном числе и именительном падеже (или винительном для неодушевленных существительных).\n" +
                 "\n" +
-                "Мы оста'немся здесь, пока' не начнётся дождь.\n" +
-                "We will stay here until the rain starts.\n" +
-                "Third Person Singular\n" +
-                "\n" +
-                "Он оста'нется рабо'тать в э'той компа'нии.\n" +
-                "He will remain working in this company.\n" +
-                "Third Person Singular\n" +
-                "\n" +
-                "Наде'юсь, что хоть что'-то от пирога' оста'нется.\n" +
-                "I hope at least something from the pie will remain.\n" +
-                "Genitive\n" +
-                "\n" +
-                "Она' оста'нется до'ма, е'сли будет плоха'я пого'да.\n" +
-                "She will stay home if the weather is bad.\n" +
-                "Nominative\n" +
-                "\n" +
-                "Ты оста'нешься со мно'й сего'дня ве'чером?\n" +
-                "Will you stay with me tonight?\n" +
-                "Second Person Singular\n" +
-                "\n" +
-                "Е'сли ты оста'нешься, мы смо'жем поговори'ть.\n" +
-                "If you stay, we will be able to talk.\n" +
-                "First Person Plural\n" +
-                "\n" +
-                "Ты оста'нешься без у'жина, е'сли не дое'шь суп.\n" +
-                "You will remain without dinner if you don't finish your soup.\n" +
-                "Genitive\n" +
-                "\n" +
-                "Я оста'нусь до'ма и почита'ю кни'гу.\n" +
-                "I will stay home and read a book.\n" +
-                "First Person Singular\n" +
-                "\n" +
-                "Я оста'нусь то'лько на ча'с, пото'м мне ну'жно уйти'.\n" +
-                "I will stay only for an hour, then I need to leave.\n" +
-                "Accusative\n" +
-                "\n" +
-                "Я оста'нусь споко'ен, несмо'тря на всю сумато'ху.\n" +
-                "I will remain calm, despite all the hustle.\n" +
-                "Short\n" +
-                "\n" +
-                "Все го'сти ушли', но не'которые оста'лись.\n" +
-                "All the guests left, but some remained.\n" +
-                "Past\n" +
-                "\n" +
-                "На сто'лике оста'лись то'лько пу'стые таре'лки.\n" +
-                "Only empty plates remained on the table.\n" +
-                "Nominative\n" +
-                "\n" +
-                "Мы оста'лись о'чень дово'льны результа'том.\n" +
-                "We remained very pleased with the result.\n" +
-                "Short\n" +
-                "\n" +
-                "Ма'ло вре'мени оста'лось до нача'ла спекта'кля.\n" +
-                "Little time remained until the beginning of the performance.\n" +
-                "Past\n" +
-                "\n" +
-                "От э'того зага'дочного соо'бщения оста'лось лишь недоуме'ние.\n" +
-                "Only bewilderment remained from this mysterious message.\n" +
-                "Nominative\n" +
-                "\n" +
-                "В бу'тылке оста'лось чуть-чуть воды'.\n" +
-                "A little water remained in the bottle.\n" +
-                "Genitive\n" +
-                "\n" +
-                "Она' оста'лась одна' в большо'м до'ме.\n" +
-                "She remained alone in the big house.\n" +
-                "Past\n" +
-                "\n" +
-                "На таре'лке оста'лась всего' одна' я'года.\n" +
-                "Only one berry remained on the plate.\n" +
-                "Nominative\n" +
-                "\n" +
-                "Моя' ма'ма оста'лась дово'льна пода'рком.\n" +
-                "My mother remained pleased with the gift.\n" +
-                "Short\n" +
-                "\n" +
-                "Он оста'лся в па'мяти как геро'й.\n" +
-                "He remained in memory as a hero.\n" +
-                "Past\n" +
-                "\n" +
-                "По'сле всех пра'здников у нас оста'лся то'лько сыр.\n" +
-                "After all the holidays, only cheese remained for us.\n" +
-                "Nominative\n" +
-                "\n" +
-                "Ко'тик оста'лся дово'лен свое'й но'вой игру'шкой.\n" +
-                "The kitty remained pleased with its new toy.\n" +
-                "Short\n" +
-                "\n" +
-                "Пожа'луйста, оста'ньтесь с на'ми ещё' нена'долго.\n" +
-                "Please, stay with us a little longer.\n" +
-                "Imperative Plural\n" +
-                "\n" +
-                "Оста'ньтесь на свои'х места'х до конца' филь'ма!\n" +
-                "Stay in your seats until the end of the film!\n" +
-                "Genitive\n" +
-                "\n" +
-                "Оста'ньтесь споко'йны, и всё бу'дет хорошо'.\n" +
-                "Remain calm, and everything will be fine.\n" +
-                "Short\n" +
-                "\n" +
-                "Оста'нься со мно'й, мне гру'стно.\n" +
-                "Stay with me, I'm sad.\n" +
-                "Imperative Singular\n" +
-                "\n" +
-                "Оста'нься здесь, я ско'ро верну'сь.\n" +
-                "Stay here, I'll be back soon.\n" +
-                "First Person Singular\n" +
-                "\n" +
-                "Оста'нься ве'рным свои'м идеа'лам.\n" +
-                "Remain true to your ideals.\n" +
-                "Dative";
+                "Таким образом, корень **хорош-** даёт значение, а окончание **-ий** указывает на грамматические характеристики (род, число, падеж) прилагательного. Вместе они образуют слово \"хороший\", которое мы используем для описания чего-то или кого-то \"доброго\" или \"качественного\" в мужском роде, например, \"хороший день\", \"хороший человек\".";
+        Word word = wordRepository.findById(116L).get();
 
-        String longDefinition = "Оста'ться зна'чит не уйти' и'ли не уе'хать откуда'-то, а быть в э'том ме'сте. Э'то та'кже мо'жет зна'чить, что что'-то не испо'льзовано и'ли не ушло', и оно' всё' ещё' есть.";
-        String etymology = "Сло'во \"оста'ться\" – э'то иско'нно ру'сское сло'во.\n" +
-                "Оно' образова'но от глаго'ла \"стать\" и пре'фикса \"о-\".\n" +
-                "Глаго'л \"стать\" зна'чит \"стоя'ть\" или \"станови'ться\". Э'то о'чень ста'рый ко'рень, кото'рый пришёл из праславя'нского языка' (*stati), а е'щё ра'ньше – из праиндоевропе'йского языка'.\n" +
-                "Пре'фикс \"о-\" ча'сто пока'зывает, что де'йствие заверша'ется или что-то остаётся на ме'сте.\n" +
-                "Так, \"оста'ться\" буква'льно зна'чит \"продолжа'ть стоя'ть\" или \"быть где'-то, не уходи'ть\".\n" +
-                "Э'тот глаго'л испо'льзуется, когда' что-то или кто'-то не ухо'дит, а остаётся на ме'сте, или когда' что-то остаётся по'сле друго'го де'йствия.\n" +
-                "Наприме'р, \"оста'ться до'ма\" (не уходи'ть) или \"оста'лось ма'ло вре'мени\" (вре'мя, кото'рое ещё' есть).\n" +
-                "Э'то сло'во развива'лось есте'ственным путём в ру'сском язы'ке.";
-        String usage = "Сло'во \"оста'ться\" - это о'чень распростра'нённый и нейтра'льный глаго'л в ру'сском языке'.\n" +
-                "\n" +
-                "*   **Форма'льный или неофициа'льный?** Оно' не форма'льное и не неофициа'льное. Вы мо'жете испо'льзовать его' в любо'й ситуа'ции: как с друзья'ми, так и с колле'гами или незнако'мыми людьми'. Оно' подхо'дит для разли'чных конте'кстов обще'ния.\n" +
-                "\n" +
-                "*   **Профессиона'льные или академи'ческие конте'ксты?** Да, его' мо'жно испо'льзовать и там, но оно' не специ'фическое. Наприме'р, вы мо'жете сказа'ть: \"результа'ты оста'лись те'ми же\" или \"фа'кты оста'лись без измене'ний\". Но э'то сло'во испо'льзуется не то'лько для нау'ки или рабо'ты.\n" +
-                "\n" +
-                "*   **Письме'нный или у'стный язык?** Оно' оди'наково ча'сто испо'льзуется как в у'стной, так и в письме'нной ре'чи. Вы услы'шите его' в повседне'вных разгово'рах и прочита'ете в кни'гах, новостя'х или пи'сьмах.\n" +
-                "\n" +
-                "*   **Региона'льное испо'льзование?** Нет, э'то станда'ртное сло'во. Его' испо'льзуют во всех региона'х, где говоря'т по-ру'сски. Оно' по'нятно везде'.\n" +
-                "\n" +
-                "*   **Социа'льные ситуа'ции и конте'ксты:**\n" +
-                "    *   **\"Оста'ться где-то\"**: зна'чит не уходи'ть, быть где-то. Наприме'р: \"Мы оста'лись дома на выходны'е\". \"Он оста'лся в го'роде\".\n" +
-                "    *   **\"Оста'ться каким-то\"**: зна'чит сохраня'ть состоя'ние или положе'ние. Наприме'р: \"Она' оста'лась споко'йной\". \"Вопро'с оста'лся откры'тым\".\n" +
-                "    *   **\"Оста'ться что-то\"**: зна'чит быть в нали'чии, когда' что-то ушло' или испо'льзовано. Наприме'р: \"Ско'лько де'нег у тебя' оста'лось?\" \"Мне оста'лось то'лько одно' я'блоко\".\n" +
-                "    *   Мо'жет означа'ть, что что-то забы'ли: \"Мои' кни'ги оста'лись в маши'не\".\n" +
-                "\n" +
-                "*   **Культу'рные или стилисти'ческие осо'бенности?** Э'то нейтра'льный глаго'л без осо'бых стилисти'ческих отте'нков. Он о'чень ва'жен для повседне'вного обще'ния и понима'ния ру'сского языка'.";
-        String formation = "Сло'во оста́ться – э'то глаго'л в неопределённой фо'рме (инфинити'в). Дава'йте посмо'трим, как оно' стро'ится.\n" +
-                "\n" +
-                "1.  **Приста'вка \"о-\"**: Э'та приста'вка мо'жет пока'зывать, что де'йствие завершено' и что-то остаётся, и'ли что де'йствие происхо'дит с каки'м-то результа'том. Здесь она' помога'ет созда'ть зна'чение \"сохрани'ться\", \"быть где-то\".\n" +
-                "\n" +
-                "2.  **Ко'рень \"-ста-\"**: Э'тот ко'рень встреча'ется во мно'гих слова'х, свя'занных с положе'нием и'ли измене'нием положе'ния, например, в слова'х \"стоя'ть\" и'ли \"стать\". Здесь он даёт осно'вное зна'чение \"быть\", \"находи'ться\".\n" +
-                "\n" +
-                "3.  **Су'ффикс \"-ть\"**: Э'то су'ффикс инфинити'ва. Он пока'зывает, что э'то неопределённая фо'рма глаго'ла.\n" +
-                "\n" +
-                "4.  **По'стфикс \"-ся\"**: Э'то возвра'тный по'стфикс. Он пока'зывает, что де'йствие направлено на само'го себя' и'ли что де'йствие происходит само' по себе' (неперехо'дный глаго'л). В э'том слу'чае он означа'ет \"оста'ться\" как неперехо'дное де'йствие.\n" +
-                "\n" +
-                "Таки'м о'бразом, приста'вка \"о-\" + ко'рень \"-ста-\" + су'ффикс \"-ть\" + по'стфикс \"-ся\" образу'ют глаго'л \"оста'ться\", кото'рый означа'ет \"не уходи'ть\", \"находи'ться в определённом ме'сте\" и'ли \"быть в нали'чии\". Э'то глаго'л соверше'нного ви'да.";
-        Word word = wordRepository.findById(170L).get();
-
-        GeneratedContentDTO generatedContentDTO = new GeneratedContentDTO();
+        InstantiatedGeneratedContentDTO generatedContentDTO = new InstantiatedGeneratedContentDTO();
         generatedContentDTO.sentences.put(ReadingLevel.BEGINNER, beginnerSentences);
         generatedContentDTO.sentences.put(ReadingLevel.INTERMEDIATE, intermediateSentences);
-        generatedContentDTO.sentences.put(ReadingLevel.ADVANCED, advancedSentences);
         generatedContentDTO.definitions = definitions;
         generatedContentDTO.wordInformation.usageContext = usage;
         generatedContentDTO.wordInformation.etymology = etymology;
         generatedContentDTO.wordInformation.formation = formation;
         generatedContentDTO.wordInformation.definition = longDefinition;
 
-        GeneratedContentService.CorrectedContentWithErrorsDTO correctedContentWithErrorsDTO = generatedContentService.createCorrectedContentEntities(generatedContentDTO, word);
-        wordService.saveGeneratedContentToWord(
-                correctedContentWithErrorsDTO.sentenceWithErrors.stream().map((s) -> s.sentence).toList(),
-                correctedContentWithErrorsDTO.definitionWithErrors.stream().map((d) -> d.definition).toList(),
-                correctedContentWithErrorsDTO.wordInformation,
-                word);
-        generatedContentErrorService.addErrors(correctedContentWithErrorsDTO.sentenceWithErrors, correctedContentWithErrorsDTO.definitionWithErrors);
+        ApprovedGeneratedContent approvedGeneratedContent = generatedContentService.createCorrectedContentEntities(generatedContentDTO, word);
+        wordService.saveGeneratedContentToWord(approvedGeneratedContent.sentences(), approvedGeneratedContent.definitions(),
+                approvedGeneratedContent.wordInformation(), approvedGeneratedContent.words());
 
-        List<Long> allSentenceIds = word.getSentences().stream().map(Sentence::getId).toList();
-        List<GeneratedContentError> allErrorsInDB = new ArrayList<>();
-        allSentenceIds.stream().map((sentenceID) -> generatedContentErrorRepository.findAllByOriginatingEntityId(sentenceID))
-                        .forEach((allErrorsInDB::addAll));
-
+        Optional<Word> always = wordRepository.findById(160L);
+        Set<Sentence> alwaysSentences = always.get().getSentences();
 
         Assertions.assertAll(
-                () -> Assertions.assertEquals(1, allErrorsInDB.size()),
-                () -> Assertions.assertFalse(sentenceRepository.findAllByWordId(170L).isEmpty()),
-                () -> Assertions.assertFalse(definitionRepository.findAllByWordId(170L).isEmpty()),
-                () -> Assertions.assertNotNull(wordInformationRepository.findByWordId(170L))
+                () -> Assertions.assertTrue(alwaysSentences.size() > 1),
+                () -> Assertions.assertTrue(alwaysSentences.stream().findFirst().get().getContainingWords().size() > 1)
         );
     }
 
+    @Test
+    @Transactional
+    public void callGeminiToCreateSentences() {
+        Optional<Word> retrievedWord = wordRetrievalService.getWordByIdForSentenceCreation(630L);
 
+        if (retrievedWord.isPresent()) {
+            Word word = retrievedWord.get();
+
+            if (word.getSentences().isEmpty()) {
+                generatedContentService.generateContentForWord(word, AiModel.GEMINI);
+            }
+        }
+
+        Word savedWord = wordRepository.findById(630L).get();
+
+        Assertions.assertAll(
+                () -> Assertions.assertTrue(savedWord.getSentences().size() > 1),
+                () -> Assertions.assertTrue(savedWord.getSentences()
+                        .stream().findFirst().get().getContainingWords().size() > 1)
+        );
+    }
 }

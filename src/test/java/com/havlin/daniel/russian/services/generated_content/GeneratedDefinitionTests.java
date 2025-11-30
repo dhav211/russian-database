@@ -5,6 +5,7 @@ import com.havlin.daniel.russian.entities.generated_content.Definition;
 import com.havlin.daniel.russian.entities.generated_content.WordInformation;
 import com.havlin.daniel.russian.repositories.dictionary.WordFormRepository;
 import com.havlin.daniel.russian.repositories.dictionary.WordRepository;
+import com.havlin.daniel.russian.services.retrieval.WordRetrievalService;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -12,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.List;
+import java.util.Set;
 
 @SpringBootTest
 public class GeneratedDefinitionTests {
@@ -24,10 +26,13 @@ public class GeneratedDefinitionTests {
     @Autowired
     private GeneratedContentErrorService generatedContentErrorService;
 
+    @Autowired
+    private WordRetrievalService wordRetrievalService;
+
     @Test
     @Transactional
     public void createDefinitionsForWord() {
-        DefinitionGenerator definitionGenerator = new DefinitionGenerator(wordFormRepository, generatedContentErrorService);
+        DefinitionGenerator definitionGenerator = new DefinitionGenerator(wordRetrievalService);
         PromptGenerator promptGenerator = new PromptGenerator(wordFormRepository);
         Word word = wordRepository.findById(179L).get();
         Word room = wordRepository.findById(230L).get();
@@ -63,10 +68,10 @@ public class GeneratedDefinitionTests {
                 "\n" +
                 "Морфологи'чески состоит из корня «ком-» и суффикса «-ната». Существительное' женского' рода с типичной для русского' языка структу'рой словообразова'ния.";
 
-        List<GeneratedContentService.DefinitionWithErrors> definitions = definitionGenerator.createShortDefinitions(shortDefinition, word);
+        Set<Definition> definitions = definitionGenerator.createShortDefinitions(shortDefinition, word);
         //WordInformation info = definitionGenerator.createWordInformation(wordInformation, word);
         //WordInformation roomInfo = definitionGenerator.createWordInformation(wordInformationForRoom, room);
-        List<GeneratedContentService.DefinitionWithErrors> roomDefinitions = definitionGenerator.createShortDefinitions(shortDefinition, room);
+        Set<Definition> roomDefinitions = definitionGenerator.createShortDefinitions(shortDefinition, room);
 
         Assertions.assertAll(
                 () -> Assertions.assertEquals(3, definitions.size()),

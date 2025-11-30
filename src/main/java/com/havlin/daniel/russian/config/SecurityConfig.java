@@ -27,6 +27,8 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers("/addAll/**").permitAll()
+                        //.requestMatchers("/addAll/**").hasAuthority("USE_DICTIONARY")
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session

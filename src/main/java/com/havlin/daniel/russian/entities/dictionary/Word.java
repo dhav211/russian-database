@@ -44,8 +44,12 @@ public class Word {
     @OneToMany(mappedBy = "word", fetch = FetchType.LAZY)
     private final Set<Definition> definitions = new HashSet<>();
 
-    @OneToMany(mappedBy = "word", fetch = FetchType.LAZY)
-    private final Set<Sentence> sentences = new HashSet<>();
+    @ManyToMany(cascade = CascadeType.ALL)
+    @JoinTable(
+            name = "word_sentence",
+            joinColumns = @JoinColumn(name = "word_id"),
+            inverseJoinColumns = @JoinColumn(name = "sentence_id"))
+    private final Set<Sentence> containingSentences = new HashSet<>();
 
     public static Word getError(String message) {
         Word error = new Word();
@@ -101,7 +105,6 @@ public class Word {
         return translations;
     }
 
-
     public Noun getNoun() {
         return noun;
     }
@@ -122,13 +125,22 @@ public class Word {
         return wordForms;
     }
 
-
     public Set<Definition> getDefinitions() {
         return definitions;
     }
 
     public Set<Sentence> getSentences() {
-        return sentences;
+        return containingSentences;
+    }
+
+    public void addSentence(Sentence sentence) {
+        this.containingSentences.add(sentence);
+        sentence.getContainingWords().add(this);
+    }
+
+    public void removeSentence(Sentence sentence) {
+        this.containingSentences.remove(sentence);
+        sentence.getContainingWords().remove(this);
     }
 
     public WordInformation getWordInformation() {

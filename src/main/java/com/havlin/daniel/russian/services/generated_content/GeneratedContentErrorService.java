@@ -26,24 +26,4 @@ public final class GeneratedContentErrorService {
 
         return error;
     }
-
-    void addErrors(List<GeneratedContentService.SentenceWithErrors> sentencesWithErrors,
-                   List<GeneratedContentService.DefinitionWithErrors> definitionsWithErrors) {
-        List<GeneratedContentError> allErrors = new ArrayList<>();
-        for (GeneratedContentService.SentenceWithErrors sentenceWithErrors : sentencesWithErrors) {
-            sentenceWithErrors.errors.forEach((e) -> {
-                e.setOriginatingEntityId(sentenceWithErrors.sentence.getId());
-                allErrors.add(e);
-            });
-        }
-
-        for (GeneratedContentService.DefinitionWithErrors definitionWithErrors : definitionsWithErrors) {
-            definitionWithErrors.errors.forEach((e) -> {
-                e.setOriginatingEntityId(definitionWithErrors.definition.getId());
-                allErrors.add(e);
-            });
-        }
-
-        generatedContentErrorRepository.saveAll(allErrors);
-    }
 }

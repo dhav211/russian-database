@@ -35,10 +35,10 @@ public class GenerateContentController {
         this.generatedContentService = generatedContentService;
     }
 
-    @PostMapping(value = "/addAll/{accentedWord}")
-    public void addAllInitialContentForWord(@PathVariable("accentedWord") String accentedWord) {
+    @PostMapping(value = "/addAll/{id}")
+    public void addAllInitialContentForWord(@PathVariable("id") Long id) {
         try {
-            Optional<Word> retrievedWord = wordRetrievalService.getWordByAccentedTextForSentenceCreation(accentedWord);
+            Optional<Word> retrievedWord = wordRetrievalService.getWordByIdForSentenceCreation(id);
 
             if (retrievedWord.isPresent()) {
                 Word word = retrievedWord.get();

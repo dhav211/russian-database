@@ -29,8 +29,6 @@ public class PromptGenerator {
             level = ("B1");
         } else if (readingLevel == ReadingLevel.INTERMEDIATE) {
             level = "B2";
-        } else {
-            level = "C1";
         }
 
         prompt.append("You will be creating Russian grammar exercises using different forms of the word "
@@ -131,7 +129,7 @@ public class PromptGenerator {
         }
 
         prompt.append("""
-                You can only use these word forms and not call them by any other name. For each word form listed above, you must create 2-3 unique sentences. Each sentence should be followed by its English translation, then the grammatical case/form (without mentioning the specific word, gender, number, or using the word "case"). Nominative Participle is not a grammar form, do not use it.
+                You can only use these word forms . For each word form listed above, you must create 2-3 unique sentences. Each sentence should be followed by its English translation.
                 
                 Requirements:
                 """ + " - Write sentences at ").append(level).append(" level Russian").append(""" 
@@ -140,17 +138,12 @@ public class PromptGenerator {
                 - Make sentences diverse and interesting - some can be humorous or absurd for better memory retention
                 - Every sentence should be completely different and unique
                 - Do not write any numbers, explanations, or additional information
-                - Do not mention plural, singular, gender, or write "case" in your grammar descriptions
-                - Only identify the grammatical form (e.g., "Instrumental", "Genitive", "Short"). Do create any word forms other than the ones previously listed.
-                - The Gerund word form must be "Gerund Past" or "Gerund Present" just "Gerund" is an error.
-                - If the grammar form isn't one of the following, it is an error and should be changed to one of the following (Past, First Person Singular, Second Person Singular, Third Person Singular, First Person Plural, Second Person Plural, Third Person Plural, Gerund Present, Gerund Past, Participle Active Present, Participle Active Past, Participle Passive Present, Participle Passive Past, Imperative Singular, Imperative Plural, Nominative, Genitive, Dative, Accusative, Instrumental, Prepositional, Short, Comparative, Superlative).
                 
                 Format your output exactly like this example:
                 Кресть'яне торгу'ют зе'млями уже' не'сколько лет.
                 Peasants have been trading lands for several years.
-                Instrumental
                 
-                Each sentence, its translation, and grammar form should be on separate lines. Work through each word form in the order provided, creating 2-3 sentences for each form. Include every single form listed in the word forms.
+                Each sentence and its translation should be on separate lines. Work through each word form in the order provided, creating 2-3 sentences for each form. Include every single form listed in the word forms.
                 
                 Begin writing the sentences immediately without any preamble or additional text.
                 """);

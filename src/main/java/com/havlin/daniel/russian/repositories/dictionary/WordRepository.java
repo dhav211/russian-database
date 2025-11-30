@@ -16,16 +16,19 @@ public interface WordRepository extends JpaRepository<Word, Long> {
     @Query("SELECT w.type From Word w WHERE w.id = :id")
     WordType findWordTypeById(@Param("id") Long id);
 
-    @Query("SELECT w FROM Word w LEFT JOIN FETCH w.sentences WHERE w.id = :id")
-    Optional<Word> findWordByIdWithSentences(@Param("id") Long id);
-
-    @Query("SELECT w FROM Word w LEFT JOIN FETCH w.sentences JOIN FETCH w.wordForms WHERE w.id = :id")
-    Optional<Word> findWordByIdWithSentencesAndWordForms(@Param("id") Long id);
-
     @Query("SELECT w FROM Word w " +
-            "LEFT JOIN FETCH w.sentences " +
+            "LEFT JOIN FETCH w.containingSentences " +
             "LEFT JOIN FETCH w.wordForms " +
             "LEFT JOIN FETCH w.definitions " +
             "WHERE w.accented = :accented")
-    Optional<Word> findWordByAccentedForContentCreation(@Param("accented") String accented);
+    List<Word> findWordsByAccentedForContentCreation(@Param("accented") String accented);
+
+    @Query("SELECT w FROM Word w " +
+            "LEFT JOIN FETCH w.containingSentences " +
+            "LEFT JOIN FETCH w.wordForms " +
+            "LEFT JOIN FETCH w.definitions " +
+            "WHERE w.id = :id")
+    Optional<Word> findWordByIdForContentCreation(@Param("id") Long id);
+
+    boolean existsByAccented(String accented);
 }
