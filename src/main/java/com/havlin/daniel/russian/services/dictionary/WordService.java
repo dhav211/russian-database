@@ -23,8 +23,6 @@ public class WordService {
     private final DefinitionRepository definitionRepository;
     private final WordInformationRepository wordInformationRepository;
     private final WordRepository wordRepository;
-    private final WordFormRepository wordFormRepository;
-
 
     public WordService(SentenceRepository sentenceRepository, DefinitionRepository definitionRepository,
                        WordInformationRepository wordInformationRepository, WordRepository wordRepository,
@@ -33,7 +31,6 @@ public class WordService {
         this.definitionRepository = definitionRepository;
         this.wordInformationRepository = wordInformationRepository;
         this.wordRepository = wordRepository;
-        this.wordFormRepository = wordFormRepository;
     }
 
     @Transactional
@@ -43,76 +40,5 @@ public class WordService {
         definitionRepository.saveAll(definitions);
         wordInformationRepository.save(wordInformation);
         wordRepository.saveAllAndFlush(words); // We need to get the IDs generated for the sentences and definitions, so flush it
-    }
-
-    /**
-     * Get the given's word's word form by the given form type.
-     * @param word The word of the word form being searched
-     * @param formType String value of the form type
-     * @return The requested word form by form type
-     */
-    public Optional<WordForm> getWordsWordFormBasedOnWordFormType(Word word, String formType) {
-        try {
-            if (word.getWordForms() == null) { // The word you sent in didn't have the word forms initialized
-                return Optional.empty();
-            }
-
-            // Search through each word form comparing the form type. Once the value has been matched we will return that word form
-            for (WordForm form : word.getWordForms()) {
-                String currentFormType = form.getFormType();
-                if (convertFormTypeStringToWordCase(currentFormType) == convertFormTypeStringToWordCase(formType)) {
-                    return Optional.of(form);
-                }
-            }
-
-            // If we couldn't find anything we will just return an empty optional
-            return Optional.empty();
-        } catch (FormTypeDoesNotHaveACaseException | FormTypeDoesNotHaveAGenderException e) {
-            return Optional.empty();
-        }
-    }
-
-    public WordCase getWordFormsCase(WordForm wordForm) {
-        return convertFormTypeStringToWordCase(wordForm.getFormType());
-    }
-
-    private String getAdjectiveWordFormGender(String formType) {
-        String[] formTypeTestSplit = formType.split("_");
-        String extractedGender = formTypeTestSplit[formTypeTestSplit.length - 2];
-
-        switch (extractedGender) {
-            case "m", "f", "n", "pl" -> {
-                return extractedGender;
-            }
-            default -> throw new FormTypeDoesNotHaveAGenderException(formType);
-        }
-    }
-
-
-    private WordCase convertFormTypeStringToWordCase(String formType) {
-        String[] formTypeTestSplit = formType.split("_");
-        String extractedType = formTypeTestSplit[formTypeTestSplit.length - 1];
-
-        switch (extractedType) {
-            case "prep" -> {
-                return WordCase.PREPOSITIONAL;
-            }
-            case "inst" -> {
-                return WordCase.INSTRUMENTAL;
-            }
-            case "acc" -> {
-                return WordCase.ACCUSATIVE;
-            }
-            case "dat" -> {
-                return WordCase.DATIVE;
-            }
-            case "gen" -> {
-                return WordCase.GENITIVE;
-            }
-            case "nom" -> {
-                return WordCase.NOMINATIVE;
-            }
-            default -> throw new FormTypeDoesNotHaveACaseException(formType);
-        }
     }
 }

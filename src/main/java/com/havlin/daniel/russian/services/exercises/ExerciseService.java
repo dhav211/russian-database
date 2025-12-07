@@ -30,10 +30,14 @@ public class ExerciseService {
         // exercises based on the json objects
         List<Exercise> exercises = new ArrayList<>();
 
-        Word word1 = wordRetrievalService.getWordByAccentedTextForSentenceCreation("большо'й").get();
-        AdjectiveNounCaseEndingExercise exercise1 = new AdjectiveNounCaseEndingExercise(word1, wordRetrievalService);
-        exercise1.create();
-        exercises.add(exercise1);
+        try {
+            Word word1 = wordRetrievalService.getWordByAccentedTextForSentenceCreation("большо'й").get();
+            AdjectiveNounCaseEndingExercise exercise1 = new AdjectiveNounCaseEndingExercise(word1, wordRetrievalService);
+            exercise1.create();
+            exercises.add(exercise1);
+        } catch (FailedToCreateExerciseException e) {
+            System.out.println(e.getMessage());
+        }
 
         return exercises;
     }
