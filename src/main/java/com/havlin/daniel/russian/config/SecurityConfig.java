@@ -26,6 +26,7 @@ public class SecurityConfig {
                         // Or disable for development: .disable()
                 )
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/**").permitAll()
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/addAll/**").permitAll()
                         //.requestMatchers("/addAll/**").hasAuthority("USE_DICTIONARY")

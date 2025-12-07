@@ -5,6 +5,8 @@ import com.havlin.daniel.russian.entities.retrieval.*;
 import com.havlin.daniel.russian.repositories.dictionary.WordFormRepository;
 import com.havlin.daniel.russian.repositories.dictionary.WordRepository;
 import com.havlin.daniel.russian.services.dictionary.DefinitionService;
+import com.havlin.daniel.russian.services.dictionary.FormTypeDoesNotHaveACaseException;
+import com.havlin.daniel.russian.services.dictionary.WordService;
 import com.havlin.daniel.russian.services.retrieval.WordRetrievalService;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -30,6 +32,9 @@ public class DictionaryTests {
 
     @Autowired
     private WordFormRepository wordFormRepository;
+
+    @Autowired
+    WordService wordService;
 
     private ClickedWordDTO getFirstFromSetOfWordType(Set<ClickedWordDTO> dtoSet, WordType wordType) {
         for (ClickedWordDTO wordDTO : dtoSet) {
@@ -94,6 +99,25 @@ public class DictionaryTests {
                 () -> Assertions.assertEquals(1, words3.size()),
                 () -> Assertions.assertEquals(1, word4.size()),
                 () -> Assertions.assertEquals(1, word5.size())
+        );
+    }
+
+    @Test
+    public void getRandomNoun() {
+        Optional<Word> random1 = wordRetrievalService.getARandomNoun();
+
+        Assertions.assertTrue(random1.isPresent());
+    }
+
+    @Test
+    public void findWordFormsCase() {
+        WordForm wordForm1 = wordFormRepository.findById(1489049L).get();
+        WordForm wordForm2 = wordFormRepository.findById(1175512L).get();
+
+        Assertions.assertAll(
+                () -> Assertions.assertEquals(WordCase.DATIVE, wordService.getWordFormsCase(wordForm1)),
+                () -> Assertions.assertThrows(FormTypeDoesNotHaveACaseException.class,
+                        () -> wordService.getWordFormsCase(wordForm2))
         );
     }
 }

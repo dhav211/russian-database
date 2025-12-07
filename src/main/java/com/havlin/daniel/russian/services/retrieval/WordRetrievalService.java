@@ -15,10 +15,12 @@ public class WordRetrievalService {
     private static final Logger log = LoggerFactory.getLogger(WordRetrievalService.class);
     private final WordRepository wordRepository;
     private final WordFormRepository wordFormRepository;
+    private final Random random;
 
     public WordRetrievalService(WordRepository wordRepository, WordFormRepository wordFormRepository) {
         this.wordRepository = wordRepository;
         this.wordFormRepository = wordFormRepository;
+        this.random = new Random();
     }
 
     public WordType getWordTypeFromWordId(Long id) {
@@ -96,6 +98,10 @@ public class WordRetrievalService {
 
     public Optional<Word> getWordByIdForSentenceCreation(Long id) {
         return wordRepository.findWordByIdForContentCreation(id);
+    }
+
+    public Optional<Word> getARandomNoun() {
+        return wordRepository.getRandomNoun(random.nextLong(5_000));
     }
 
     private Set<Word> sortWordsFromWordFormsById(List<WordForm> wordForms) {

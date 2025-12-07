@@ -32,7 +32,7 @@ public interface WordFormRepository extends JpaRepository<WordForm, Long> {
             "LEFT JOIN FETCH wf.word.definitions " +
             "LEFT JOIN FETCH wf.word.containingSentences " +
             "WHERE wf.accented = :accented")
-    List<Word> findWordByAccentedForSentenceCreation(@Param("accented") String word);
+    Set<Word> findWordByAccentedForSentenceCreation(@Param("accented") String word);
 
     boolean existsByAccented(String accented);
 }

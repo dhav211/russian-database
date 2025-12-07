@@ -30,5 +30,13 @@ public interface WordRepository extends JpaRepository<Word, Long> {
             "WHERE w.id = :id")
     Optional<Word> findWordByIdForContentCreation(@Param("id") Long id);
 
+    @Query("SELECT w FROM Word w " +
+            "LEFT JOIN FETCH w.wordForms " +
+            "LEFT JOIN FETCH w.translations " +
+            "WHERE w.noun.id = :nounId")
+    Optional<Word> getRandomNoun(@Param("nounId") Long nounId);
+
+
+
     boolean existsByAccented(String accented);
 }

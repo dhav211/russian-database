@@ -21,6 +21,15 @@ public class WordForm {
 
     private String accented;
 
+    public static WordForm getError(String message) {
+        WordForm error = new WordForm();
+        error.setBare(message);
+        error.setFormType("ERROR");
+        error.setAccented("ERROR");
+
+        return error;
+    }
+
     public Long getId() {
         return id;
     }
