@@ -8,7 +8,6 @@ import com.havlin.daniel.russian.repositories.dictionary.WordRepository;
 import com.havlin.daniel.russian.repositories.generated_content.DefinitionRepository;
 import com.havlin.daniel.russian.repositories.generated_content.GeneratedContentErrorRepository;
 import com.havlin.daniel.russian.repositories.generated_content.SentenceRepository;
-import com.havlin.daniel.russian.repositories.generated_content.WordInformationRepository;
 import com.havlin.daniel.russian.services.dictionary.WordService;
 import com.havlin.daniel.russian.services.retrieval.WordRetrievalService;
 import jakarta.persistence.EntityManager;
@@ -48,9 +47,6 @@ public class GeneratedContentTest {
 
     @Autowired
     private DefinitionRepository definitionRepository;
-
-    @Autowired
-    private WordInformationRepository wordInformationRepository;
 
     @Autowired
     private WordRetrievalService wordRetrievalService;
@@ -588,14 +584,9 @@ public class GeneratedContentTest {
         generatedContentDTO.sentences.put(ReadingLevel.BEGINNER, beginnerSentences);
         generatedContentDTO.sentences.put(ReadingLevel.INTERMEDIATE, intermediateSentences);
         generatedContentDTO.definitions = definitions;
-        generatedContentDTO.wordInformation.usageContext = usage;
-        generatedContentDTO.wordInformation.etymology = etymology;
-        generatedContentDTO.wordInformation.formation = formation;
-        generatedContentDTO.wordInformation.definition = longDefinition;
 
         ApprovedGeneratedContent approvedGeneratedContent = generatedContentService.createCorrectedContentEntities(generatedContentDTO, word);
-        wordService.saveGeneratedContentToWord(approvedGeneratedContent.sentences(), approvedGeneratedContent.definitions(),
-                approvedGeneratedContent.wordInformation(), approvedGeneratedContent.words());
+        wordService.saveGeneratedContentToWord(approvedGeneratedContent.sentences(), approvedGeneratedContent.definitions(), approvedGeneratedContent.words());
 
         Optional<Word> always = wordRepository.findById(160L);
         Set<Sentence> alwaysSentences = always.get().getSentences();

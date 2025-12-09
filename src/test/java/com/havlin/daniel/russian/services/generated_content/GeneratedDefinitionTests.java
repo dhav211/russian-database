@@ -2,7 +2,6 @@ package com.havlin.daniel.russian.services.generated_content;
 
 import com.havlin.daniel.russian.entities.dictionary.Word;
 import com.havlin.daniel.russian.entities.generated_content.Definition;
-import com.havlin.daniel.russian.entities.generated_content.WordInformation;
 import com.havlin.daniel.russian.repositories.dictionary.WordFormRepository;
 import com.havlin.daniel.russian.repositories.dictionary.WordRepository;
 import com.havlin.daniel.russian.services.retrieval.WordRetrievalService;

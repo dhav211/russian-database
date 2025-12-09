@@ -61,7 +61,6 @@ public class GeneratedContentService {
             wordService.saveGeneratedContentToWord(
                     approvedContent.sentences(),
                     approvedContent.definitions(),
-                    approvedContent.wordInformation(),
                     approvedContent.words());
         } catch (Exception e) {
             log.error(e.getMessage());
@@ -75,7 +74,7 @@ public class GeneratedContentService {
      * @return All the generated content in string form which will later be corrected and turned into entities
      */
     private InstantiatedGeneratedContentDTO getGeneratedContent(Word word, AiModel aiModel) {
-        int numberOfThreads = 7;
+        int numberOfThreads = 3;
         InstantiatedGeneratedContentDTO generatedContentDTO = new InstantiatedGeneratedContentDTO();
 
         try(ExecutorService executor = Executors.newFixedThreadPool(numberOfThreads)) {
@@ -89,20 +88,6 @@ public class GeneratedContentService {
                     new ClaudeContentGenerator(claudeKey, latch, promptGenerator.getShortDefinitionPrompt(word)) :
                     new GeminiContentGenerator(latch, promptGenerator.getShortDefinitionPrompt(word));
             Future<String> definitionFuture = executor.submit(shortDefinitionGenerator);
-
-            String[] wordInformationPrompts = promptGenerator.getWordInformationPrompts(word);
-            WordInformationFutureHolder wordInformationFutureHolder = new WordInformationFutureHolder();
-            for (int i = 0; i < wordInformationPrompts.length; i++) {
-                LLMContentGenerator wordInformationGenerator = aiModel == AiModel.CLAUDE ?
-                        new ClaudeContentGenerator(claudeKey, latch, wordInformationPrompts[i]) :
-                        new GeminiContentGenerator(latch, wordInformationPrompts[i]);
-                switch (i) {
-                    case 0 -> wordInformationFutureHolder.definition = executor.submit(wordInformationGenerator);
-                    case 1 -> wordInformationFutureHolder.etymology = executor.submit(wordInformationGenerator);
-                    case 2 -> wordInformationFutureHolder.usageContext = executor.submit(wordInformationGenerator);
-                    case 3 -> wordInformationFutureHolder.formation = executor.submit(wordInformationGenerator);
-                }
-            }
 
             // We are keeping the sentence futures in a map so we can keep track of the reading level
             Map<ReadingLevel, Future<String>> uneditedGeneratedSentenceFutures = new HashMap<>();
@@ -123,11 +108,6 @@ public class GeneratedContentService {
             }
 
             generatedContentDTO.definitions = definitionFuture.get();
-
-            generatedContentDTO.wordInformation.definition = wordInformationFutureHolder.definition.get();
-            generatedContentDTO.wordInformation.etymology = wordInformationFutureHolder.etymology.get();
-            generatedContentDTO.wordInformation.formation = wordInformationFutureHolder.formation.get();
-            generatedContentDTO.wordInformation.usageContext = wordInformationFutureHolder.usageContext.get();
         } catch (InterruptedException | ExecutionException | NullPointerException e) {
             e.printStackTrace();
             return generatedContentDTO.ERRORS();
@@ -153,35 +133,14 @@ public class GeneratedContentService {
         }
 
         Set<Definition> definitions = definitionGenerator.createShortDefinitions(generatedContentDTO.definitions, word);
-        WordInformation wordInformation = definitionGenerator
-                .createWordInformation(
-                        generatedContentDTO.wordInformation.definition,
-                        generatedContentDTO.wordInformation.etymology,
-                        generatedContentDTO.wordInformation.usageContext,
-                        generatedContentDTO.wordInformation.formation,
-                        word);
         Set<Word> words = new HashSet<>(wordsToSave.values());
 
-        return new ApprovedGeneratedContent(sentences, definitions, wordInformation, words);
+        return new ApprovedGeneratedContent(sentences, definitions, words);
     }
 
     static class GeneratedSentenceDTO {
         String russianText;
         String englishText;
-    }
-
-    private static class WordInformationFutureHolder {
-        Future<String> definition;
-        Future<String> etymology;
-        Future<String> usageContext;
-        Future<String> formation;
-    }
-
-    static class WordInformationDTO {
-        String definition;
-        String etymology;
-        String usageContext;
-        String formation;
     }
 
 }

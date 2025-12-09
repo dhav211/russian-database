@@ -16,10 +16,4 @@ public interface Exercise {
      * Builds the exercise and sets all the data.
      */
     void create();
-
-    /**
-     * Ensures that the create method has run and has run successfully.
-     * @return Returns true if the create method was successfully, and false if not.
-     */
-    boolean isCreated();
 }

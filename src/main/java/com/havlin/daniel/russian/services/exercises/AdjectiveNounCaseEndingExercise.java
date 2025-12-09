@@ -56,11 +56,6 @@ public class AdjectiveNounCaseEndingExercise implements Exercise{
     }
 
     @Override
-    public boolean isCreated() {
-        return true;
-    }
-
-    @Override
     public String toString() {
         return adjectiveWithNoEnding + "__ " + nounInForm + "      ANSWER: " + answers;
     }

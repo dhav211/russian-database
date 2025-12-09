@@ -4,7 +4,6 @@ import com.havlin.daniel.russian.entities.dictionary.Word;
 import com.havlin.daniel.russian.entities.generated_content.Definition;
 import com.havlin.daniel.russian.entities.generated_content.GeneratedContentError;
 import com.havlin.daniel.russian.entities.generated_content.GeneratedContentStatus;
-import com.havlin.daniel.russian.entities.generated_content.WordInformation;
 import com.havlin.daniel.russian.repositories.dictionary.WordFormRepository;
 import com.havlin.daniel.russian.services.retrieval.WordRetrievalService;
 import com.havlin.daniel.russian.utils.GeneratedContentChecker;
@@ -58,22 +57,5 @@ public class DefinitionGenerator {
             }
         }
         return approvedDefinitions;
-    }
-
-
-    public WordInformation createWordInformation(String definition,
-                                                 String etymology,
-                                                 String usageContext,
-                                                 String formation,
-                                                 Word word) {
-        WordInformation wordInformation = new WordInformation();
-        wordInformation.setWord(word);
-        wordInformation.setFormation(formation);
-        wordInformation.setDefinition(definition);
-        wordInformation.setUsageContext(usageContext);
-        wordInformation.setEtymology(etymology);
-        word.setWordInformation(wordInformation);
-
-        return wordInformation;
     }
 }

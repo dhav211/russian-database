@@ -2,7 +2,6 @@ package com.havlin.daniel.russian.entities.dictionary;
 
 import com.havlin.daniel.russian.entities.generated_content.Definition;
 import com.havlin.daniel.russian.entities.generated_content.Sentence;
-import com.havlin.daniel.russian.entities.generated_content.WordInformation;
 import jakarta.persistence.*;
 
 import java.util.HashSet;
@@ -30,10 +29,6 @@ public class Word {
     @OneToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "verb_id")
     private Verb verb;
-
-    @OneToOne(cascade = CascadeType.PERSIST)
-    @JoinColumn(name = "information_id")
-    private WordInformation wordInformation;
 
     @OneToMany(mappedBy = "word", fetch = FetchType.LAZY)
     private final Set<Translation> translations = new HashSet<>();
@@ -141,14 +136,6 @@ public class Word {
     public void removeSentence(Sentence sentence) {
         this.containingSentences.remove(sentence);
         sentence.getContainingWords().remove(this);
-    }
-
-    public WordInformation getWordInformation() {
-        return wordInformation;
-    }
-
-    public void setWordInformation(WordInformation wordInformation) {
-        this.wordInformation = wordInformation;
     }
 
     @Override

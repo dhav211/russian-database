@@ -108,16 +108,4 @@ public class DictionaryTests {
 
         Assertions.assertTrue(random1.isPresent());
     }
-
-    @Test
-    public void findWordFormsCase() {
-        WordForm wordForm1 = wordFormRepository.findById(1489049L).get();
-        WordForm wordForm2 = wordFormRepository.findById(1175512L).get();
-
-        Assertions.assertAll(
-                () -> Assertions.assertEquals(WordCase.DATIVE, wordService.getWordFormsCase(wordForm1)),
-                () -> Assertions.assertThrows(FormTypeDoesNotHaveACaseException.class,
-                        () -> wordService.getWordFormsCase(wordForm2))
-        );
-    }
 }

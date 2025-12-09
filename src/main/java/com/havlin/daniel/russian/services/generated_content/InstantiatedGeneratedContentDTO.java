@@ -12,7 +12,6 @@ import java.util.Map;
 class InstantiatedGeneratedContentDTO {
     InstantiatedGeneratedContentDTO() {
         definitions = "";
-        wordInformation = new GeneratedContentService.WordInformationDTO();
         sentences = new HashMap<>();
         hasError = false;
     }
@@ -21,7 +20,6 @@ class InstantiatedGeneratedContentDTO {
         InstantiatedGeneratedContentDTO erroredContent = new InstantiatedGeneratedContentDTO();
 
         erroredContent.definitions = null;
-        erroredContent.wordInformation = null;
         erroredContent.sentences = null;
         erroredContent.hasError = true;
 
@@ -29,7 +27,6 @@ class InstantiatedGeneratedContentDTO {
     }
 
     String definitions;
-    GeneratedContentService.WordInformationDTO wordInformation;
     Map<ReadingLevel, String> sentences;
     boolean hasError;
 }

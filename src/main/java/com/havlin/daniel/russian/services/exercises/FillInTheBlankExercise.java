@@ -13,10 +13,6 @@ public class FillInTheBlankExercise implements Exercise {
         // find the word position
         // split the sentence by the spaces
         // now we can basically take slices of the
-    }
 
-    @Override
-    public boolean isCreated() {
-        return false;
     }
 }
