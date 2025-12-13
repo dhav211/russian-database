@@ -39,7 +39,7 @@ public class Word {
     @OneToMany(mappedBy = "word", fetch = FetchType.LAZY)
     private final Set<Definition> definitions = new HashSet<>();
 
-    @ManyToMany(cascade = CascadeType.ALL)
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH}, fetch = FetchType.EAGER)
     @JoinTable(
             name = "word_sentence",
             joinColumns = @JoinColumn(name = "word_id"),

@@ -8,6 +8,7 @@ import com.havlin.daniel.russian.repositories.dictionary.WordRepository;
 import com.havlin.daniel.russian.repositories.generated_content.DefinitionRepository;
 import com.havlin.daniel.russian.repositories.generated_content.GeneratedContentErrorRepository;
 import com.havlin.daniel.russian.repositories.generated_content.SentenceRepository;
+import com.havlin.daniel.russian.services.dictionary.SentenceService;
 import com.havlin.daniel.russian.services.dictionary.WordService;
 import com.havlin.daniel.russian.services.retrieval.WordRetrievalService;
 import jakarta.persistence.EntityManager;
@@ -17,10 +18,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 @SpringBootTest
 public class GeneratedContentTest {
@@ -50,6 +48,9 @@ public class GeneratedContentTest {
 
     @Autowired
     private WordRetrievalService wordRetrievalService;
+
+    @Autowired
+    private SentenceService sentenceService;
 
     @Test
     @Transactional
@@ -610,12 +611,71 @@ public class GeneratedContentTest {
             }
         }
 
-        Word savedWord = wordRepository.findById(630L).get();
+        Word savedWord = wordRepository.findById(114L).get();
 
         Assertions.assertAll(
                 () -> Assertions.assertTrue(savedWord.getSentences().size() > 1),
                 () -> Assertions.assertTrue(savedWord.getSentences()
                         .stream().findFirst().get().getContainingWords().size() > 1)
         );
+    }
+
+    @Test
+    public void actuallyCreateSentences() {
+        List<Long> ids = List.of(444L,
+                457L,
+                489L,
+                521L,
+                548L,
+                639L,
+                688L,
+                729L,
+                731L);
+        for (Long id : ids) {
+            Optional<Word> retrievedWord = wordRetrievalService.getWordByIdForSentenceCreation(id);
+
+            if (retrievedWord.isPresent()) {
+                Word word = retrievedWord.get();
+
+                if (word.getSentences().size() < 65) {
+                    generatedContentService.generateContentForWord(word, AiModel.GEMINI);
+                }
+            System.out.println("Finished generated content for word " + word.getBare() + " of id " + id);
+            }
+
+        }
+    }
+
+    @Test
+    public void removeDuplicatesTest() {
+        Set<Sentence> sentences = new HashSet<>();
+        sentences.addAll(sentenceRepository.findAllByText("На'до быть преде'льно осторо'жным в разгово'ре с незнако'мыми людьми', осо'бенно в' больших города'х."));
+        sentences.addAll(sentenceRepository.findAllByText("Доро'га вела' нас че'рез живопи'сные поля' и леса'."));
+
+        int oldSentenceSize = sentences.size();
+
+        sentences = generatedContentService.removeDuplicateSentences(sentences);
+
+        Assertions.assertTrue(oldSentenceSize > sentences.size());
+    }
+
+    @Test
+    @Transactional
+    public void removeSentence() {
+        long sentenceRepoSize = sentenceRepository.count();
+        Sentence sentenceToRemove = sentenceRepository.findById(10222L).get();
+        Sentence nullSentence = sentenceRepository.findById(342L).orElse(null);
+        boolean isNullSentenceRemoved = sentenceService.removeSentence(nullSentence);
+        sentenceService.removeSentence(sentenceToRemove);
+
+        Assertions.assertAll(
+                () -> Assertions.assertFalse(isNullSentenceRemoved)
+        );
+    }
+
+    @Test
+    @Transactional
+    public void nothing() {
+        sentenceService.findAndRemoveDuplicateSentences();
     }
 }

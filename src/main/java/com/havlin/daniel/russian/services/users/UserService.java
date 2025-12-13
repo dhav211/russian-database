@@ -26,6 +26,10 @@ public class UserService implements UserDetailsService {
         return new SecurityUser(userRepository.findByUsername(username));
     }
 
+    public User loadDatabaseUserByUsername(String username) throws UsernameNotFoundException {
+        return userRepository.findByUserNameWithDictionary(username);
+    }
+
     public User createUser(String username, String password, String email, UserRole role) {
         User user = new User();
         user.setUsername(username);

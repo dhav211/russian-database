@@ -78,7 +78,6 @@ public class GeneratedContentService {
         InstantiatedGeneratedContentDTO generatedContentDTO = new InstantiatedGeneratedContentDTO();
 
         try(ExecutorService executor = Executors.newFixedThreadPool(numberOfThreads)) {
-
             // Once this countdown reaches zero we know all the threads have completed and we can move forward
             // with parsing the responses
             CountDownLatch latch = new CountDownLatch(numberOfThreads);
@@ -136,6 +135,23 @@ public class GeneratedContentService {
         Set<Word> words = new HashSet<>(wordsToSave.values());
 
         return new ApprovedGeneratedContent(sentences, definitions, words);
+    }
+
+    Set<Sentence> removeDuplicateSentences(Set<Sentence> sentences) {
+        Set<String> addedSentences = new HashSet<>();
+        Set<Sentence> sentencesToRemove = new HashSet<>();
+
+        for (Sentence sentence : sentences) {
+            if (addedSentences.contains(sentence.getText())) {
+                sentencesToRemove.add(sentence);
+            } else {
+                addedSentences.add(sentence.getText());
+            }
+        }
+
+        sentences.removeAll(sentencesToRemove);
+
+        return sentences;
     }
 
     static class GeneratedSentenceDTO {

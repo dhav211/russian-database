@@ -31,17 +31,21 @@ public class LearnedWordService {
      */
     @Transactional
     public LearnedWord createLearnedWord(User user, Long wordId) {
-        LearnedWord learnedWord = new LearnedWord();
-        learnedWord.setUser(user);
-        learnedWord.setWordId(wordId);
-        learnedWord.setLearnedDate();
+        try {
+            LearnedWord learnedWord = new LearnedWord();
+            learnedWord.setUser(user);
+            learnedWord.setWordId(wordId);
+            learnedWord.setLearnedDate();
 
-        user.getDictionary().add(learnedWord);
+            user.getDictionary().add(learnedWord);
 
-        learnedWordRepository.save(learnedWord);
-        userRepository.save(user);
+            learnedWordRepository.save(learnedWord);
+            userRepository.save(user);
 
-        return learnedWord;
+            return learnedWord;
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     /**

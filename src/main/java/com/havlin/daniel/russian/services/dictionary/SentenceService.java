@@ -21,9 +21,6 @@ import java.util.stream.Collectors;
 
 @Service
 public class SentenceService {
-    @Value("${api.claude.key}")
-    private String claudeKey;
-
     private final WordFormRepository wordFormRepository;
     private final WordRepository wordRepository;
     private final SentenceRepository sentenceRepository;
@@ -36,44 +33,37 @@ public class SentenceService {
         this.sentenceRepository = sentenceRepository;
     }
 
-    // TODO this should be removed, everything
+    public boolean removeSentence(Sentence sentence) {
+        try {
+            sentence.removeWords();
+            sentenceRepository.delete(sentence);
+            return true;
+        } catch (NullPointerException e) {
+            return false;
+        }
+    }
 
-//    // TODO this shouldn't require an AnthropicClient but a LLMContentGenerator, which can be claude or gemini
-//    public void createSentencesForWord(Word word, AnthropicClient anthropicClient) {
-//        List<Sentence> sentences = new ArrayList<>();
-//
-//        sentences.addAll(createSentenceListFromGeneratedSentences(callClaudeForSentenceGeneration(word, ReadingLevel.BEGINNER, anthropicClient), word, ReadingLevel.BEGINNER));
-//        sentences.addAll(createSentenceListFromGeneratedSentences(callClaudeForSentenceGeneration(word, ReadingLevel.INTERMEDIATE, anthropicClient), word, ReadingLevel.INTERMEDIATE));
-//        sentences.addAll(createSentenceListFromGeneratedSentences(callClaudeForSentenceGeneration(word, ReadingLevel.ADVANCED, anthropicClient), word, ReadingLevel.ADVANCED));
-//
-//        sentences.forEach((sentence -> word.getSentences().add(sentence)));
-//
-//        // TODO uncomment this actually save to the database
-//        //sentenceRepository.saveAll(sentences);
-//        //wordRepository.save(word);
-//    }
+    public void findAndRemoveDuplicateSentences() {
+        List<Sentence> duplicates = sentenceRepository.findDuplicateSentences();
+        Map<String, List<Sentence>> sortedDuplicates = new HashMap<>();
 
-//    // TODO extract this into the ClaudeContentGenerator class
-//    private String callClaudeForSentenceGeneration(Word word, ReadingLevel readingLevel, AnthropicClient anthropicClient) {
-//        String sentences = "";
-//        try{
-//            MessageCreateParams params = MessageCreateParams.builder()
-//                    .maxTokens(8192L)
-//                    .addUserMessage(buildPromptForSentenceGeneration(word, readingLevel))
-//                    .model(Model.CLAUDE_3_5_HAIKU_20241022)
-//                    .build();
-//            Message message = anthropicClient.messages().create(params);
-//            Optional<TextBlock> textBlock = message.content().getFirst().text();
-//
-//            if (textBlock.isPresent()) {
-//                sentences = textBlock.get().text();
-//            }
-//        } catch (Exception e) {
-//            // TODO return a real error here
-//            System.out.println(e.getMessage());
-//        }
-//        return sentences;
-//    }
+        for (Sentence sentence : duplicates) {
+            if (!sortedDuplicates.containsKey(sentence.getText())) {
+                sortedDuplicates.put(sentence.getText(), new ArrayList<>());
+            }
+            sortedDuplicates.get(sentence.getText()).add(sentence);
+        }
+
+        for (String key :sortedDuplicates.keySet()) {
+            int count = 0;
+            for (Sentence sentence : sortedDuplicates.get(key)) {
+                if (count > 0) {
+                    removeSentence(sentence);
+                }
+                count++;
+            }
+        }
+    }
 
 }
 

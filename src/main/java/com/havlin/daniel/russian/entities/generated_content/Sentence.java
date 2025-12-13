@@ -23,7 +23,7 @@ public class Sentence {
     @Enumerated(EnumType.STRING)
     private GeneratedContentStatus status;
 
-    @ManyToMany(mappedBy = "containingSentences")
+    @ManyToMany(mappedBy = "containingSentences", fetch = FetchType.EAGER)
     private final Set<Word> containingWords = new HashSet<>();
 
     public Long getId() {
@@ -66,6 +66,13 @@ public class Sentence {
     public void removeWord(Word word) {
         this.containingWords.remove(word);
         word.getSentences().remove(this);
+    }
+
+    @PreRemove
+    public void removeWords() {
+        for (Word word : containingWords) {
+            word.getSentences().remove(this);
+        }
     }
 
     public GeneratedContentStatus getStatus() {
