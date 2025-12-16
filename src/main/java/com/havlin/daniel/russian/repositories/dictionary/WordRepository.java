@@ -36,6 +36,10 @@ public interface WordRepository extends JpaRepository<Word, Long> {
             "WHERE w.noun.id = :nounId")
     Optional<Word> getRandomNoun(@Param("nounId") Long nounId);
 
+    @Query("SELECT w FROM Word w " +
+            "LEFT JOIN FETCH w.wordForms " +
+            "WHERE w.id IN :ids")
+    List<Word> getWordsByIdsWithWordForms(@Param("ids") List<Long> ids);
 
 
     boolean existsByAccented(String accented);

@@ -1,6 +1,7 @@
 package com.havlin.daniel.russian.services.exercises;
 
 import com.havlin.daniel.russian.entities.dictionary.Word;
+import com.havlin.daniel.russian.entities.users.User;
 import com.havlin.daniel.russian.services.dictionary.WordService;
 import com.havlin.daniel.russian.services.retrieval.WordRetrievalService;
 import org.springframework.stereotype.Service;
@@ -21,7 +22,7 @@ public class ExerciseService {
         this.random = new Random();
     }
 
-    public List<Exercise> createExercises() {
+    public List<Exercise> createExercises(User user) {
         // Choose 5 words from user dictionary
         // create 5 exercises for each word
         // each exercise should get more difficult each time, for example we will start with matching,
@@ -35,6 +36,11 @@ public class ExerciseService {
             AdjectiveNounCaseEndingExercise exercise1 = new AdjectiveNounCaseEndingExercise(word1, wordRetrievalService);
             exercise1.create();
             exercises.add(exercise1);
+
+            Word word2 = wordRetrievalService.getWordByAccentedTextForSentenceCreation("коне'ц").get();
+            FillInTheBlankExercise exercise2 = new FillInTheBlankExercise(word2, random, user.getDictionary(), wordRetrievalService);
+            exercise2.create();
+            exercises.add(exercise2);
         } catch (FailedToCreateExerciseException e) {
             System.out.println(e.getMessage());
         }

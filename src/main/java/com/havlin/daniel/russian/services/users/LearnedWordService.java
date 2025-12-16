@@ -1,26 +1,36 @@
 package com.havlin.daniel.russian.services.users;
 
+import com.havlin.daniel.russian.entities.dictionary.Word;
+import com.havlin.daniel.russian.entities.dictionary.WordType;
 import com.havlin.daniel.russian.entities.users.LearnedWord;
 import com.havlin.daniel.russian.entities.users.User;
+import com.havlin.daniel.russian.repositories.dictionary.WordRepository;
 import com.havlin.daniel.russian.repositories.users.LearnedWordRepository;
 import com.havlin.daniel.russian.repositories.users.UserRepository;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Limit;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 public class LearnedWordService {
     private static final Logger log = LoggerFactory.getLogger(LearnedWordService.class);
     private final LearnedWordRepository learnedWordRepository;
     private final UserRepository userRepository;
+    private final WordRepository wordRepository;
 
-    public LearnedWordService(LearnedWordRepository learnedWordRepository, UserRepository userRepository) {
+    public LearnedWordService(LearnedWordRepository learnedWordRepository, UserRepository userRepository,
+                              WordRepository wordRepository) {
         this.learnedWordRepository = learnedWordRepository;
         this.userRepository = userRepository;
+        this.wordRepository = wordRepository;
     }
 
     /**

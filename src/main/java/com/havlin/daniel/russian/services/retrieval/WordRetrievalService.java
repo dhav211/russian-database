@@ -119,6 +119,10 @@ public class WordRetrievalService {
         }
     }
 
+    public List<Word> getWordsByIdsWithWordForms(List<Long> ids) {
+        return wordRepository.getWordsByIdsWithWordForms(ids);
+    }
+
     public WordRetrievalDTO fetchWordById(Long id) {
         try {
             WordRetrievalDTO wordDTO = null;

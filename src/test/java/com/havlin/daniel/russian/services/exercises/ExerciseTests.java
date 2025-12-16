@@ -1,6 +1,7 @@
 package com.havlin.daniel.russian.services.exercises;
 
 import com.havlin.daniel.russian.entities.dictionary.Word;
+import com.havlin.daniel.russian.entities.dictionary.WordType;
 import com.havlin.daniel.russian.entities.users.LearnedWord;
 import com.havlin.daniel.russian.entities.users.SecurityUser;
 import com.havlin.daniel.russian.entities.users.User;
@@ -67,6 +68,10 @@ public class ExerciseTests {
 
     @Test
     void fillInTheBlank() {
-
+        Random random = new Random();
+        User user = userService.loadDatabaseUserByUsername("test_man");
+        Word word1 = wordRetrievalService.getWordByAccentedTextForSentenceCreation("сторона'").get();
+        FillInTheBlankExercise fillInTheBlankExercise1 = new FillInTheBlankExercise(word1, random, user.getDictionary(), wordRetrievalService);
+        fillInTheBlankExercise1.create();
     }
 }
