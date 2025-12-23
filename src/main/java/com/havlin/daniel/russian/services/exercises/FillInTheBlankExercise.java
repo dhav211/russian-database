@@ -12,7 +12,7 @@ import com.havlin.daniel.russian.services.users.LearnedWordService;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class FillInTheBlankExercise implements Exercise {
+class FillInTheBlankExercise implements Exercise {
     private final Word word;
     private final Random random;
     private Set<LearnedWord> learnedWords;

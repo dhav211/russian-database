@@ -1,7 +1,6 @@
 package com.havlin.daniel.russian.controllers.exercises;
 
 import com.havlin.daniel.russian.entities.users.User;
-import com.havlin.daniel.russian.services.exercises.AdjectiveNounCaseEndingExercise;
 import com.havlin.daniel.russian.services.exercises.Exercise;
 import com.havlin.daniel.russian.services.exercises.ExerciseService;
 import com.havlin.daniel.russian.services.users.LearnedWordService;

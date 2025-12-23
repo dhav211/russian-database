@@ -1,6 +1,6 @@
 package com.havlin.daniel.russian.services.exercises;
 
-public enum ExerciseType {
+enum ExerciseType {
     FILL_IN_THE_BLANK,
     TRANSLATION_MATCH,
     CHOOSE_CASE,

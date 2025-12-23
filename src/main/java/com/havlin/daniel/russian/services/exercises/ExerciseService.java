@@ -41,6 +41,11 @@ public class ExerciseService {
             FillInTheBlankExercise exercise2 = new FillInTheBlankExercise(word2, random, user.getDictionary(), wordRetrievalService);
             exercise2.create();
             exercises.add(exercise2);
+
+            Word word3 = wordRetrievalService.getWordByAccentedTextForSentenceCreation("сторона'").get();
+            CaseEndingExercise exercise3 = new CaseEndingExercise(word3, random);
+            exercise3.create();
+            exercises.add(exercise3);
         } catch (FailedToCreateExerciseException e) {
             System.out.println(e.getMessage());
         }

@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class AdjectiveNounCaseEndingExercise implements Exercise{
+class AdjectiveNounCaseEndingExercise implements Exercise{
     private final Word word;
     private final WordRetrievalService wordRetrievalService;
     private Set<String> answers;

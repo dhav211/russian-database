@@ -74,4 +74,13 @@ public class ExerciseTests {
         FillInTheBlankExercise fillInTheBlankExercise1 = new FillInTheBlankExercise(word1, random, user.getDictionary(), wordRetrievalService);
         fillInTheBlankExercise1.create();
     }
+
+    @Test
+    void caseEnding() {
+        Random random = new Random();
+        User user = userService.loadDatabaseUserByUsername("test_man");
+        Word word1 = wordRetrievalService.getWordByAccentedTextForSentenceCreation("сторона'").get();
+        CaseEndingExercise exercise1 = new CaseEndingExercise(word1, random);
+        exercise1.create();
+    }
 }
