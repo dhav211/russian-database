@@ -46,6 +46,11 @@ public class ExerciseService {
             CaseEndingExercise exercise3 = new CaseEndingExercise(word3, random);
             exercise3.create();
             exercises.add(exercise3);
+
+            Word word4 = wordRetrievalService.getWordByAccentedTextForSentenceCreation("ждать").get();
+            VerbConjugationExercise exercise4 = new VerbConjugationExercise(word4, random);
+            exercise4.create();
+            exercises.add(exercise4);
         } catch (FailedToCreateExerciseException e) {
             System.out.println(e.getMessage());
         }

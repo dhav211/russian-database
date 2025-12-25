@@ -6,9 +6,9 @@ import com.havlin.daniel.russian.entities.dictionary.WordForm;
 import java.util.*;
 
 class CaseEndingExercise implements Exercise{
-    private List<ExerciseDeclensionTableRow> declensionTableRows;
-    private Word word;
-    private Random random;
+    private List<ExerciseMorphTableRow> declensionTableRows;
+    private final Word word;
+    private final Random random;
 
     public CaseEndingExercise(Word word, Random random) {
         this.word = word;
@@ -19,6 +19,14 @@ class CaseEndingExercise implements Exercise{
     public void create() {
         declensionTableRows = new ArrayList<>();
 
+        if (word == null) {
+            throw new FailedToCreateExerciseException("There is no word to create exercise");
+        }
+
+        if (word.getNoun() == null) {
+            throw new FailedToCreateExerciseException(word.getBare() + " is not a noun");
+        }
+
         // There is a chance a word won't have any word forms, so we can just exit from this exercise
         if (word.getNoun().isIndeclinable()) {
             throw new FailedToCreateExerciseException(word.getBare() + " is not declinable, exercise cannot be created.");
@@ -27,13 +35,15 @@ class CaseEndingExercise implements Exercise{
         // For this exercise we will only give the table for the plural or singular forms
         // There are words that can't be in one form or the other so let's test that here
         if (word.getNoun().isSingularOnly()) {
-            declensionTableRows = getForms(GrammaticalNumber.SINGULAR);
+            declensionTableRows = ExerciseUtils.getForms(ExerciseUtils.WordFormTypeSearchTerm.SINGULAR, word);
         } else if (word.getNoun().isPluralOnly()) {
-            declensionTableRows = getForms(GrammaticalNumber.PLURAL);
+            declensionTableRows = ExerciseUtils.getForms(ExerciseUtils.WordFormTypeSearchTerm.PLURAL, word);
         } else {
             // most words can in both forms so let's just choose one at random
             boolean isRandomSingular = random.nextBoolean();
-            declensionTableRows = isRandomSingular ? getForms(GrammaticalNumber.SINGULAR) : getForms(GrammaticalNumber.PLURAL);
+            declensionTableRows = isRandomSingular
+                    ? ExerciseUtils.getForms(ExerciseUtils.WordFormTypeSearchTerm.SINGULAR, word)
+                    : ExerciseUtils.getForms(ExerciseUtils.WordFormTypeSearchTerm.PLURAL, word);
         }
 
         // exit the exercise if for some chance we didn't fill the table
@@ -41,53 +51,15 @@ class CaseEndingExercise implements Exercise{
             throw new FailedToCreateExerciseException("Couldn't fill declension table with word forms for the word " + word.getBare());
         }
 
-        // choose 3 indexes from the declension table, we will do this at random
-        List<Integer> randomWordFormIndexes = new ArrayList<>();
-
-        while (randomWordFormIndexes.size() < 3) {
-            int randomChoice = random.nextInt(6);
-            if (!randomWordFormIndexes.contains(randomChoice)) {
-                randomWordFormIndexes.add(randomChoice);
-            }
-        }
-
-        // loop through each of the random indexes, choose from the declension table with that index and set the
-        // isFilled boolean to true, this show the word to the user instead of leaving it blank
-        for (Integer index : randomWordFormIndexes) {
-            declensionTableRows.get(index).setAlreadyFilled(true);
+        // Mark the fields the user needs to fill out
+        try {
+            ExerciseUtils.setRandomRowsAsFilled(declensionTableRows, random, 3);
+        } catch (IndexOutOfBoundsException e) {
+            throw new FailedToCreateExerciseException("Failed to create exercise, went out of bounds of table");
         }
     }
 
-    private List<ExerciseDeclensionTableRow> getForms(GrammaticalNumber grammaticalNumber) {
-        List<ExerciseDeclensionTableRow> rows = new ArrayList<>();
-        Map<String, List<String>> typesAndForms = new HashMap<>();
-        String containsSearch = grammaticalNumber == GrammaticalNumber.SINGULAR ? "_sg_" : "_pl_";
-
-        for (WordForm wordForm : word.getWordForms()) {
-            if (wordForm.getFormType().contains(containsSearch)) {
-                if (typesAndForms.containsKey(wordForm.getFormType())) {
-                    typesAndForms.get(wordForm.getFormType()).add(wordForm.getBare());
-                } else {
-                    List<String> formTypes = new ArrayList<>();
-                    formTypes.add(wordForm.getBare());
-                    typesAndForms.put(wordForm.getFormType(), formTypes);
-                }
-            }
-        }
-
-        for (Map.Entry<String, List<String>> entry : typesAndForms.entrySet()) {
-            rows.add(new ExerciseDeclensionTableRow(entry.getKey(), entry.getValue(), false));
-        }
-
-        return rows;
-    }
-
-    public List<ExerciseDeclensionTableRow> getDeclensionTableRows() {
+    public List<ExerciseMorphTableRow> getDeclensionTableRows() {
         return declensionTableRows;
-    }
-
-    private enum GrammaticalNumber {
-        SINGULAR,
-        PLURAL
     }
 }

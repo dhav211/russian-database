@@ -2,12 +2,12 @@ package com.havlin.daniel.russian.services.exercises;
 
 import java.util.List;
 
-class ExerciseDeclensionTableRow {
+class ExerciseMorphTableRow {
     private String wordFormType;
     private List<String> wordForms;
     private boolean isAlreadyFilled;
 
-    ExerciseDeclensionTableRow(String wordFormType, List<String> wordForms, boolean isAlreadyFilled) {
+    ExerciseMorphTableRow(String wordFormType, List<String> wordForms, boolean isAlreadyFilled) {
         this.wordFormType = wordFormType;
         this.wordForms = wordForms;
         this.isAlreadyFilled = isAlreadyFilled;

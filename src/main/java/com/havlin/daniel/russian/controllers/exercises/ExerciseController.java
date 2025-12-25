@@ -43,8 +43,6 @@ public class ExerciseController {
 
         List<Exercise> exercises = exerciseService.createExercises(currentUser);
 
-        //AdjectiveNounCaseEndingExercise exercise1 = new AdjectiveNounCaseEndingExercise()
-
         return ResponseEntity.ok(exercises);
     }
 }
